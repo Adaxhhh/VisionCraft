@@ -1,0 +1,4 @@
+# Detected third-party dependencies for this project
+# To pin exact versions, run: pip freeze > requirements.txt
+Flask>=2.0
+

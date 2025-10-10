@@ -1,31 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vocal for Local – Handicraft Store</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vocal for Local — Home</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <header>
-    <h1>🧺 Vocal for Local</h1>
-    <p>Support Indian artisans by buying beautiful handcrafted products</p>
+    <div class="brand"><div class="logo">VL</div><div><h1>Vocal for Local</h1><p>Handcrafted goods — made with care</p></div></div>
+    <nav></nav>
   </header>
 
-  <section class="product-grid">
-    {% for p in products %}
-      <div class="product-card">
-        <img src="{{ url_for('static', filename=p.image) }}" alt="{{ p.name }}">
-        <h3>{{ p.name }}</h3>
-        <p>{{ p.description }}</p>
-        <p class="price">₹{{ p.price }}</p>
-        <a href="{{ url_for('view_in_ar', product_id=p.id) }}" class="btn">👁️ View in AR</a>
-      </div>
-    {% endfor %}
-  </section>
+  <main>
+    <section class="product-grid">
+      {% for p in products %}
+        <div class="product-card">
+          <div class="product-image-wrapper">
+            <a href="{{ url_for('product_page', product_id=p.id) }}">
+              <img src="{{ url_for('static', filename=p.image) }}" alt="{{ p.name }}" class="product-image">
+            </a>
+            <span class="badge">New</span>
+          </div>
+          <div class="product-details">
+            <a href="{{ url_for('product_page', product_id=p.id) }}" class="product-title">
+              <h3>{{ p.name }}</h3>
+            </a>
+            <p class="product-description">{{ p.description }}</p>
+            <div class="product-footer">
+              <div class="price">₹{{ p.price }}</div>
+              <a href="{{ url_for('view_in_ar', product_id=p.id) }}" class="btn">View in AR</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </section>
+  </main>
 
   <footer>
-    <p>Made with ❤️ for local artisans</p>
+    &copy; 2025 Vocal for Local. All rights reserved.
   </footer>
 </body>
 </html>

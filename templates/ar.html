@@ -1,237 +1,314 @@
-﻿<!DOCTYPE html><!DOCTYPE html>
-
-<html><html>
-
-<head><head>
-
-  <meta charset="utf-8"><meta charset="utf-8">
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>AR View - {{ product.name }}</title><title>WebXR AR - {{ product.name }}</title>
-
-  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script><style>
-
-  <style>body { margin: 0; font-family: sans-serif; }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }#ar-button { 
-
-    body { margin: 0; font-family: sans-serif; background: #f5f5f5; }  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-
-      background: #667eea; color: white; padding: 20px 40px; border-radius: 50px;
-
-    .back-btn {  font-weight: bold; font-size: 18px; border: none; cursor: pointer; z-index: 100;
-
-      position: fixed; top: 20px; left: 20px; z-index: 100;}
-
-      background: white; color: #667eea; padding: 12px 24px;.back-btn {
-
-      border-radius: 12px; text-decoration: none; font-weight: 600;  position: fixed; top: 20px; left: 20px; z-index: 101;
-
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);  background: white; color: #667eea; padding: 12px 24px;
-
-    }  border-radius: 12px; text-decoration: none; font-weight: 600;
-
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>AR View - {{ product.name }}</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      margin: 0; 
+      font-family: Inter, 'Segoe UI', sans-serif; 
+      background: linear-gradient(180deg, #f7f8fb 0%, #eef2ff 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
     }
-
-    model-viewer {#info { 
-
-      width: 100vw;  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-
-      height: 100vh;  background: rgba(0,0,0,0.7); color: white; padding: 15px 25px;
-
-      background-color: #f5f5f5;  border-radius: 10px; display: none; z-index: 100; text-align: center;
-
-    }}
-
-    .error {
-
-    .ar-prompt {  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-
-      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);  background: rgba(255,0,0,0.9); color: white; padding: 30px;
-
-      background: rgba(0,0,0,0.75); color: white;  border-radius: 15px; display: none; max-width: 80%; text-align: center;
-
-      padding: 16px 24px; border-radius: 12px;}
-
-      font-size: 15px; text-align: center; max-width: 85%;</style>
-
-    }</head>
-
-  </style><body>
-
-</head><a href="/" class="back-btn">← Back</a>
-
-<body><button id="ar-button">🚀 Start WebXR AR</button>
-
-  <a href="/" class="back-btn">← Back to Products</a><div id="info">Tap on detected surfaces to place the product</div>
-
-  <div class="error" id="error"></div>
-
-  <div class="ar-prompt"><canvas id="canvas"></canvas>
-
-    Tap "View in your space" below to place {{ product.name }} in AR
-
-  </div><script type="module">
-
-  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.module.js';
-
-  <model-viewer
-
-    src="{{ url_for('static', filename='model.glb') }}"let scene, camera, renderer, model, reticle;
-
-    poster="{{ url_for('static', filename=product.image) }}"let hitTestSource = null;
-
-    alt="{{ product.name }}"let hitTestSourceRequested = false;
-
-    arlet xrSession = null;
-
-    ar-modes="scene-viewer webxr quick-look"
-
-    camera-controlsconst arButton = document.getElementById('ar-button');
-
-    touch-action="pan-y"const info = document.getElementById('info');
-
-    auto-rotateconst errorDiv = document.getElementById('error');
-
-    shadow-intensity="1"const canvas = document.getElementById('canvas');
-
-    environment-image="neutral"
-
-    ar-scale="auto">// Check WebXR support
-
-    <button slot="ar-button" style="if ('xr' in navigator) {
-
-      position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);  navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
-
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);    if (supported) {
-
-      color: white; padding: 16px 32px; border-radius: 50px;      arButton.addEventListener('click', activateAR);
-
-      font-weight: 700; font-size: 16px; border: none; cursor: pointer;    } else {
-
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);">      showError('AR not supported. You need Chrome on Android with ARCore.');
-
-      📱 View in your space    }
-
-    </button>  });
-
-  </model-viewer>} else {
-
-</body>  showError('WebXR not available. Use Chrome on Android.');
-
-</html>}
-
-
-function showError(message) {
-  errorDiv.textContent = message;
-  errorDiv.style.display = 'block';
-  arButton.style.display = 'none';
-}
-
-async function activateAR() {
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-  
-  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.xr.enabled = true;
-  
-  const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-  scene.add(light);
-  
-  // Reticle
-  const reticleGeo = new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2);
-  const reticleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  reticle = new THREE.Mesh(reticleGeo, reticleMat);
-  reticle.matrixAutoUpdate = false;
-  reticle.visible = false;
-  scene.add(reticle);
-  
-  // Load product image
-  const loader = new THREE.TextureLoader();
-  const productImage = '{{ url_for("static", filename=product.image) }}';
-  
-  loader.load(productImage, (texture) => {
-    const aspect = texture.image.width / texture.image.height;
-    const geo = new THREE.PlaneGeometry(0.5 * aspect, 0.5);
-    const mat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-    model = new THREE.Mesh(geo, mat);
-    model.visible = false;
-    scene.add(model);
-  });
-  
-  try {
-    // Request the simplest AR session possible
-    xrSession = await navigator.xr.requestSession('immersive-ar', {
-      requiredFeatures: ['local']
-    });
     
-    await renderer.xr.setSession(xrSession);
+    .back-btn {
+      position: fixed; top: 20px; left: 20px; z-index: 100;
+      background: white; color: #667eea; padding: 12px 24px;
+      border-radius: 12px; text-decoration: none; font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
     
-    xrSession.addEventListener('end', () => {
-      xrSession = null;
-      arButton.style.display = 'block';
-      info.style.display = 'none';
-    });
+    .product-preview {
+      background: white;
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 18px 40px rgba(30,40,60,0.08);
+      text-align: center;
+      max-width: 420px;
+      width: 100%;
+    }
     
-    arButton.style.display = 'none';
-    info.style.display = 'block';
-    info.textContent = 'Tap anywhere to place the product';
+    .product-preview img {
+      width: 100%;
+      max-width: 300px;
+      height: 300px;
+      object-fit: contain;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      background: #f5f5f5;
+    }
     
-    const controller = renderer.xr.getController(0);
-    controller.addEventListener('select', () => {
-      if (model) {
-        // Place 1.5 meters in front of camera
-        const cameraPosition = camera.position.clone();
-        const cameraDirection = new THREE.Vector3(0, 0, -1.5);
-        cameraDirection.applyQuaternion(camera.quaternion);
-        model.position.copy(cameraPosition).add(cameraDirection);
-        model.visible = true;
-      }
-    });
-    scene.add(controller);
+    .product-preview h2 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
     
-    renderer.setAnimationLoop(render);
-  } catch (error) {
-    console.error('Full error:', error);
-    showError('AR failed: ' + error.message + '. Your device may not fully support WebXR AR.');
-  }
-}
-
-function render(timestamp, frame) {
-  if (frame) {
-    const referenceSpace = renderer.xr.getReferenceSpace();
-    const session = renderer.xr.getSession();
+    .product-preview p {
+      color: #666;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
     
-    if (hitTestSource && !hitTestSourceRequested) {
-      session.requestReferenceSpace('viewer').then((space) => {
-        session.requestHitTestSource({ space }).then((source) => {
-          hitTestSource = source;
-        }).catch(() => {
-          // Hit test not available, ignore
+    .ar-button {
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(102, 126, 234, 0.18);
+      width: 100%;
+      transition: transform 0.18s ease;
+    }
+    
+    .ar-button:active {
+      transform: scale(0.95);
+    }
+    
+    .info-text {
+      color: white;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      max-width: 400px;
+      padding: 0 20px;
+    }
+    
+    #status {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.75);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: none;
+      z-index: 200;
+    }
+  </style>
+</head>
+<body>
+  <a href='/' class='back-btn'>← Back to Products</a>
+  
+  <div id="status"></div>
+  
+  <div class="product-preview">
+    <img src="{{ url_for('static', filename=product.image) }}" alt="{{ product.name }}">
+    <h2>{{ product.name }}</h2>
+    <p>{{ product.description }}</p>
+    <button class="ar-button" onclick="launchAR()">📱 View in AR</button>
+  </div>
+  
+  <div class="info-text">
+    AR will launch your device's camera to place this product in your space
+  </div>
+  
+  <script>
+    let arActive = false;
+    let video = null;
+    let productImage = null;
+    let productX = 50; // percentage
+    let productY = 50; // percentage
+    let productScale = 1;
+    
+    function showStatus(msg) {
+      const status = document.getElementById('status');
+      status.textContent = msg;
+      status.style.display = 'block';
+      setTimeout(() => status.style.display = 'none', 3000);
+    }
+    
+    async function launchAR() {
+      if (arActive) return;
+      
+      showStatus('Starting camera AR...');
+      
+      try {
+        // Check camera support
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showStatus('Camera not supported on this device');
+          return;
+        }
+        
+        // Get camera stream
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { 
+            facingMode: 'environment', // Back camera
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
         });
-      }).catch(() => {
-        // Viewer space not available, ignore
-      });
-      hitTestSourceRequested = true;
-    }
-    
-    if (hitTestSource) {
-      const hitTestResults = frame.getHitTestResults(hitTestSource);
-      if (hitTestResults.length > 0) {
-        const hit = hitTestResults[0];
-        reticle.visible = true;
-        reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
-      } else {
-        reticle.visible = false;
+        
+        // Hide preview
+        document.querySelector('.product-preview').style.display = 'none';
+        document.querySelector('.info-text').style.display = 'none';
+        
+        // Create video element
+        video = document.createElement('video');
+        video.srcObject = stream;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.style.position = 'fixed';
+        video.style.top = '0';
+        video.style.left = '0';
+        video.style.width = '100vw';
+        video.style.height = '100vh';
+        video.style.objectFit = 'cover';
+        video.style.zIndex = '1';
+        document.body.appendChild(video);
+        
+        // Create product overlay
+        productImage = document.createElement('img');
+        productImage.src = "{{ url_for('static', filename=product.image) }}";
+        productImage.style.position = 'fixed';
+        productImage.style.width = '150px';
+        productImage.style.height = '150px';
+        productImage.style.objectFit = 'contain';
+        productImage.style.zIndex = '10';
+        productImage.style.pointerEvents = 'none';
+        productImage.style.filter = 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))';
+        updateProductPosition();
+        document.body.appendChild(productImage);
+        
+        // Create AR controls
+        createARControls();
+        
+        arActive = true;
+        showStatus('AR Active! Tap to move product, pinch to resize');
+        
+      } catch (error) {
+        showStatus('Camera access denied or not available');
+        console.error('Camera error:', error);
+        document.querySelector('.product-preview').style.display = 'block';
+        document.querySelector('.info-text').style.display = 'block';
       }
     }
     
-    renderer.render(scene, camera);
-  }
-}
-</script>
+    function updateProductPosition() {
+      if (productImage) {
+        productImage.style.left = `calc(${productX}% - 75px)`;
+        productImage.style.top = `calc(${productY}% - 75px)`;
+        productImage.style.transform = `scale(${productScale})`;
+      }
+    }
+    
+    function createARControls() {
+      // Exit button
+      const exitBtn = document.createElement('button');
+      exitBtn.textContent = '✕ Exit AR';
+      exitBtn.style.position = 'fixed';
+      exitBtn.style.top = '20px';
+      exitBtn.style.right = '20px';
+      exitBtn.style.zIndex = '100';
+      exitBtn.style.background = 'rgba(0,0,0,0.7)';
+      exitBtn.style.color = 'white';
+      exitBtn.style.border = 'none';
+      exitBtn.style.padding = '12px 16px';
+      exitBtn.style.borderRadius = '8px';
+      exitBtn.style.fontSize = '14px';
+      exitBtn.onclick = exitAR;
+      document.body.appendChild(exitBtn);
+      
+      // Touch handlers for moving product
+      let isDragging = false;
+      let initialDistance = 0;
+      let initialScale = productScale;
+      
+      video.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (e.touches.length === 1) {
+          isDragging = true;
+        } else if (e.touches.length === 2) {
+          // Pinch start
+          const touch1 = e.touches[0];
+          const touch2 = e.touches[1];
+          initialDistance = Math.sqrt(
+            Math.pow(touch2.clientX - touch1.clientX, 2) +
+            Math.pow(touch2.clientY - touch1.clientY, 2)
+          );
+          initialScale = productScale;
+        }
+      });
+      
+      video.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (e.touches.length === 1 && isDragging) {
+          // Move product
+          const touch = e.touches[0];
+          productX = (touch.clientX / window.innerWidth) * 100;
+          productY = (touch.clientY / window.innerHeight) * 100;
+          updateProductPosition();
+        } else if (e.touches.length === 2) {
+          // Pinch zoom
+          const touch1 = e.touches[0];
+          const touch2 = e.touches[1];
+          const currentDistance = Math.sqrt(
+            Math.pow(touch2.clientX - touch1.clientX, 2) +
+            Math.pow(touch2.clientY - touch1.clientY, 2)
+          );
+          productScale = initialScale * (currentDistance / initialDistance);
+          productScale = Math.max(0.5, Math.min(3, productScale)); // Limit scale
+          updateProductPosition();
+        }
+      });
+      
+      video.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        isDragging = false;
+      });
+      
+      // Click handler for desktop
+      video.addEventListener('click', (e) => {
+        productX = (e.clientX / window.innerWidth) * 100;
+        productY = (e.clientY / window.innerHeight) * 100;
+        updateProductPosition();
+        showStatus('Product moved!');
+      });
+    }
+    
+    function exitAR() {
+      if (!arActive) return;
+      
+      // Stop camera
+      if (video && video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+      }
+      
+      // Remove AR elements
+      if (video) video.remove();
+      if (productImage) productImage.remove();
+      document.querySelectorAll('button').forEach(btn => {
+        if (btn.textContent.includes('Exit AR')) btn.remove();
+      });
+      
+      // Show preview again
+      document.querySelector('.product-preview').style.display = 'block';
+      document.querySelector('.info-text').style.display = 'block';
+      
+      arActive = false;
+      showStatus('AR session ended');
+    }
+    
+    // Check camera support on page load
+    window.addEventListener('load', () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showStatus('Camera not supported on this device');
+      } else {
+        showStatus('Ready! Camera AR available');
+      }
+    });
+  </script>
 </body>
 </html>

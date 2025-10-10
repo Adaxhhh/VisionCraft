@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ product.name }} — Vocal for Local</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .product-page { max-width: 900px; margin: 40px auto; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    .product-page img { width: 100%; border-radius: 12px; box-shadow: 0 12px 36px rgba(30,40,60,0.08); }
+    .product-info h1 { margin-top: 0; }
+    .product-info p { color: #5a6170; }
+    .actions { margin-top: 20px; display:flex; gap:12px; align-items:center }
+    .actions .btn { padding: 12px 18px; border-radius: 12px }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><div class="logo">VL</div><div><h1>Vocal for Local</h1><p>Handcrafted goods — made with care</p></div></div>
+    <nav><a class="btn" href="/">Back</a></nav>
+  </header>
+
+  <main class="product-page">
+    <div class="product-image">
+      <img src="{{ url_for('static', filename=product.image) }}" alt="{{ product.name }}">
+    </div>
+    <div class="product-info">
+      <h1>{{ product.name }}</h1>
+      <h2 style="color:#ef476f">Price: ₹<span id="unitPrice">{{ product.price }}</span></h2>
+      <p>{{ product.description }}</p>
+
+      <div class="qty">
+        <label for="quantity">Quantity</label>
+        <input id="quantity" type="number" min="1" value="1">
+      </div>
+
+      <div class="small">Shipping: ₹49 (flat)</div>
+
+      <h3 style="margin-top:18px">Total: ₹<span id="total">{{ product.price + 49 }}</span></h3>
+
+      <div class="actions">
+        <button class="btn" id="buyNow">Buy Now</button>
+        <a class="btn" href="{{ url_for('view_in_ar', product_id=product.id) }}">View in AR</a>
+      </div>
+
+      <div id="orderMsg" class="small" style="margin-top:12px;color:green;display:none">Order placed (demo) — we'll contact you with details.</div>
+    </div>
+  </main>
+
+  <script>
+    const unitPrice = parseFloat(document.getElementById('unitPrice').textContent);
+    const qtyInput = document.getElementById('quantity');
+    const totalEl = document.getElementById('total');
+    const orderMsg = document.getElementById('orderMsg');
+
+    function updateTotal(){
+      const q = Math.max(1, parseInt(qtyInput.value || 1));
+      const shipping = 49;
+      const total = (unitPrice * q) + shipping;
+      totalEl.textContent = total;
+    }
+
+    qtyInput.addEventListener('input', updateTotal);
+
+    document.getElementById('buyNow').addEventListener('click', () => {
+      // Simple demo order flow
+      const q = Math.max(1, parseInt(qtyInput.value || 1));
+      orderMsg.style.display = 'block';
+      orderMsg.textContent = `Demo order: ${q} x {{ product.name }}. Total ₹${totalEl.textContent} — Payment flow not integrated.`;
+      setTimeout(() => { orderMsg.textContent = 'We will reach out with order details (demo).'; }, 3000);
+    });
+  </script>
+</body>
+</html>

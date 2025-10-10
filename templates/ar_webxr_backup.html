@@ -1,0 +1,175 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebXR AR - {{ product.name }}</title>
+<style>
+body { margin: 0; font-family: sans-serif; }
+#ar-button { 
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: #667eea; color: white; padding: 20px 40px; border-radius: 50px;
+  font-weight: bold; font-size: 18px; border: none; cursor: pointer; z-index: 100;
+}
+.back-btn {
+  position: fixed; top: 20px; left: 20px; z-index: 101;
+  background: white; color: #667eea; padding: 12px 24px;
+  border-radius: 12px; text-decoration: none; font-weight: 600;
+}
+#info { 
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.7); color: white; padding: 15px 25px;
+  border-radius: 10px; display: none; z-index: 100; text-align: center;
+}
+.error {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: rgba(255,0,0,0.9); color: white; padding: 30px;
+  border-radius: 15px; display: none; max-width: 80%; text-align: center;
+}
+</style>
+</head>
+<body>
+<a href="/" class="back-btn">← Back</a>
+<button id="ar-button">🚀 Start WebXR AR</button>
+<div id="info">Tap on detected surfaces to place the product</div>
+<div class="error" id="error"></div>
+<canvas id="canvas"></canvas>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.module.js';
+
+let scene, camera, renderer, model, reticle;
+let hitTestSource = null;
+let hitTestSourceRequested = false;
+let xrSession = null;
+
+const arButton = document.getElementById('ar-button');
+const info = document.getElementById('info');
+const errorDiv = document.getElementById('error');
+const canvas = document.getElementById('canvas');
+
+// Check WebXR support
+if ('xr' in navigator) {
+  navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+    if (supported) {
+      arButton.addEventListener('click', activateAR);
+    } else {
+      showError('AR not supported. You need Chrome on Android with ARCore.');
+    }
+  });
+} else {
+  showError('WebXR not available. Use Chrome on Android.');
+}
+
+function showError(message) {
+  errorDiv.textContent = message;
+  errorDiv.style.display = 'block';
+  arButton.style.display = 'none';
+}
+
+async function activateAR() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+  
+  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.xr.enabled = true;
+  
+  const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+  scene.add(light);
+  
+  // Reticle
+  const reticleGeo = new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2);
+  const reticleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  reticle = new THREE.Mesh(reticleGeo, reticleMat);
+  reticle.matrixAutoUpdate = false;
+  reticle.visible = false;
+  scene.add(reticle);
+  
+  // Load product image
+  const loader = new THREE.TextureLoader();
+  const productImage = '{{ url_for("static", filename=product.image) }}';
+  
+  loader.load(productImage, (texture) => {
+    const aspect = texture.image.width / texture.image.height;
+    const geo = new THREE.PlaneGeometry(0.5 * aspect, 0.5);
+    const mat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+    model = new THREE.Mesh(geo, mat);
+    model.visible = false;
+    scene.add(model);
+  });
+  
+  try {
+    // Request the simplest AR session possible
+    xrSession = await navigator.xr.requestSession('immersive-ar', {
+      requiredFeatures: ['local']
+    });
+    
+    await renderer.xr.setSession(xrSession);
+    
+    xrSession.addEventListener('end', () => {
+      xrSession = null;
+      arButton.style.display = 'block';
+      info.style.display = 'none';
+    });
+    
+    arButton.style.display = 'none';
+    info.style.display = 'block';
+    info.textContent = 'Tap anywhere to place the product';
+    
+    const controller = renderer.xr.getController(0);
+    controller.addEventListener('select', () => {
+      if (model) {
+        // Place 1.5 meters in front of camera
+        const cameraPosition = camera.position.clone();
+        const cameraDirection = new THREE.Vector3(0, 0, -1.5);
+        cameraDirection.applyQuaternion(camera.quaternion);
+        model.position.copy(cameraPosition).add(cameraDirection);
+        model.visible = true;
+      }
+    });
+    scene.add(controller);
+    
+    renderer.setAnimationLoop(render);
+  } catch (error) {
+    console.error('Full error:', error);
+    showError('AR failed: ' + error.message + '. Your device may not fully support WebXR AR.');
+  }
+}
+
+function render(timestamp, frame) {
+  if (frame) {
+    const referenceSpace = renderer.xr.getReferenceSpace();
+    const session = renderer.xr.getSession();
+    
+    if (hitTestSource && !hitTestSourceRequested) {
+      session.requestReferenceSpace('viewer').then((space) => {
+        session.requestHitTestSource({ space }).then((source) => {
+          hitTestSource = source;
+        }).catch(() => {
+          // Hit test not available, ignore
+        });
+      }).catch(() => {
+        // Viewer space not available, ignore
+      });
+      hitTestSourceRequested = true;
+    }
+    
+    if (hitTestSource) {
+      const hitTestResults = frame.getHitTestResults(hitTestSource);
+      if (hitTestResults.length > 0) {
+        const hit = hitTestResults[0];
+        reticle.visible = true;
+        reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+      } else {
+        reticle.visible = false;
+      }
+    }
+    
+    renderer.render(scene, camera);
+  }
+}
+</script>
+</body>
+</html>

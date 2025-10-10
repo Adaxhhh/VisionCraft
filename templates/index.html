@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocal for Local – Handicraft Store</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header>
+    <h1>🧺 Vocal for Local</h1>
+    <p>Support Indian artisans by buying beautiful handcrafted products</p>
+  </header>
+
+  <section class="product-grid">
+    {% for p in products %}
+      <div class="product-card">
+        <img src="{{ url_for('static', filename=p.image) }}" alt="{{ p.name }}">
+        <h3>{{ p.name }}</h3>
+        <p>{{ p.description }}</p>
+        <p class="price">₹{{ p.price }}</p>
+        <a href="{{ url_for('view_in_ar', product_id=p.id) }}" class="btn">👁️ View in AR</a>
+      </div>
+    {% endfor %}
+  </section>
+
+  <footer>
+    <p>Made with ❤️ for local artisans</p>
+  </footer>
+</body>
+</html>

@@ -43,4 +43,4 @@ def product_page(product_id):
     return render_template('product.html', product=product)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=False, host='0.0.0.0', port=5000)

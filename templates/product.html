@@ -1,74 +1,383 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{{ product.description }}">
   <title>{{ product.name }} — Vocal for Local</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    .product-page { max-width: 900px; margin: 40px auto; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
-    .product-page img { width: 100%; border-radius: 12px; box-shadow: 0 12px 36px rgba(30,40,60,0.08); }
-    .product-info h1 { margin-top: 0; }
-    .product-info p { color: #5a6170; }
-    .actions { margin-top: 20px; display:flex; gap:12px; align-items:center }
-    .actions .btn { padding: 12px 18px; border-radius: 12px }
+    /* Product Page Liquid Glass Design */
+    .product-page {
+      max-width: 1100px;
+      margin: 3rem auto;
+      padding: 2.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
+
+    .product-image-container {
+      position: sticky;
+      top: 120px;
+    }
+
+    .product-image-container img {
+      width: 100%;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .product-image-container img:hover {
+      transform: scale(1.02);
+    }
+
+    /* Glass Info Card */
+    .product-info {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 2.5rem;
+      box-shadow: 0 15px 45px rgba(0, 0, 0, 0.1);
+      animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .product-info h1 {
+      margin: 0 0 1rem 0;
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+    }
+
+    .price-tag {
+      display: inline-block;
+      font-size: 2rem;
+      font-weight: 800;
+      background: var(--gradient-secondary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1.5rem;
+    }
+
+    .product-info p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+
+    /* Quantity Selector */
+    .qty-wrapper {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.5rem;
+    }
+
+    .qty-wrapper label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+      font-size: 0.95rem;
+    }
+
+    .qty-wrapper input {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: 2px solid rgba(102, 126, 234, 0.2);
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: white;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .qty-wrapper input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    /* Info Pills */
+    .info-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(102, 126, 234, 0.1);
+      color: var(--primary);
+      padding: 0.625rem 1rem;
+      border-radius: 100px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .total-section {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .total-section h3 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .total-section .total-amount {
+      font-size: 2rem;
+      font-weight: 800;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Action Buttons */
+    .actions {
+      margin-top: 2rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .actions .btn {
+      flex: 1;
+      min-width: 180px;
+      padding: 1rem 1.75rem;
+      border-radius: 14px;
+      font-size: 1rem;
+      justify-content: center;
+    }
+
+    .btn-primary {
+      background: var(--gradient-primary);
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.8);
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    }
+
+    .btn-outline:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    /* Order Message */
+    .order-message {
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 4px solid #10b981;
+      border-radius: 12px;
+      color: #065f46;
+      font-weight: 500;
+      display: none;
+      animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(-20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .product-page {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 1.5rem;
+        margin: 1.5rem auto;
+      }
+
+      .product-image-container {
+        position: relative;
+        top: 0;
+      }
+
+      .product-info {
+        padding: 2rem;
+      }
+
+      .product-info h1 {
+        font-size: 1.75rem;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .actions .btn {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Liquid Glass Header -->
   <header>
-    <div class="brand"><div class="logo">VL</div><div><h1>Vocal for Local</h1><p>Handcrafted goods — made with care</p></div></div>
-    <nav><a class="btn" href="/">Back</a></nav>
+    <div class="brand">
+      <div class="logo">VL</div>
+      <div>
+        <h1>Vocal for Local</h1>
+        <p>Handcrafted goods — made with care</p>
+      </div>
+    </div>
+    <nav>
+      <a class="btn" href="/">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back
+      </a>
+    </nav>
   </header>
 
+  <!-- Product Details Page -->
   <main class="product-page">
-    <div class="product-image">
-      <img src="{{ url_for('static', filename=product.image) }}" alt="{{ product.name }}">
+    <!-- Product Image -->
+    <div class="product-image-container">
+      <img src="{{ url_for('static', filename=product.image) }}" alt="{{ product.name }}" loading="eager">
     </div>
+
+    <!-- Product Information -->
     <div class="product-info">
       <h1>{{ product.name }}</h1>
-      <h2 style="color:#ef476f">Price: ₹<span id="unitPrice">{{ product.price }}</span></h2>
+      
+      <div class="price-tag">₹<span id="unitPrice">{{ product.price }}</span></div>
+      
       <p>{{ product.description }}</p>
 
-      <div class="qty">
-        <label for="quantity">Quantity</label>
-        <input id="quantity" type="number" min="1" value="1">
+      <!-- Quantity Selection -->
+      <div class="qty-wrapper">
+        <label for="quantity">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="9" y1="9" x2="15" y2="9"/>
+            <line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
+          Quantity
+        </label>
+        <input id="quantity" type="number" min="1" value="1" aria-label="Product quantity">
       </div>
 
-      <div class="small">Shipping: ₹49 (flat)</div>
+      <!-- Shipping Info -->
+      <div class="info-pill">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="1" y="3" width="15" height="13"/>
+          <path d="M16 8h5l3 3v5h-2m-8 0H6m0 0H4m2 0a2 2 0 1 0 4 0m8 0a2 2 0 1 0 4 0"/>
+        </svg>
+        Free Shipping on orders above ₹999 | Flat ₹49 below
+      </div>
 
-      <h3 style="margin-top:18px">Total: ₹<span id="total">{{ product.price + 49 }}</span></h3>
+      <!-- Total Section -->
+      <div class="total-section">
+        <h3>Total Amount</h3>
+        <div class="total-amount">₹<span id="total">{{ product.price + 49 }}</span></div>
+      </div>
 
+      <!-- Action Buttons -->
       <div class="actions">
-        <button class="btn" id="buyNow">Buy Now</button>
-        <a class="btn" href="{{ url_for('view_in_ar', product_id=product.id) }}">View in AR</a>
+        <button class="btn btn-primary" id="buyNow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"/>
+            <circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          Buy Now
+        </button>
+        <a class="btn btn-outline" href="{{ url_for('view_in_ar', product_id=product.id) }}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+          View in AR
+        </a>
       </div>
 
-      <div id="orderMsg" class="small" style="margin-top:12px;color:green;display:none">Order placed (demo) — we'll contact you with details.</div>
+      <!-- Order Confirmation Message -->
+      <div id="orderMsg" class="order-message" role="alert"></div>
     </div>
   </main>
 
+  <!-- Product Interaction Script -->
   <script>
     const unitPrice = parseFloat(document.getElementById('unitPrice').textContent);
     const qtyInput = document.getElementById('quantity');
     const totalEl = document.getElementById('total');
     const orderMsg = document.getElementById('orderMsg');
 
-    function updateTotal(){
+    function updateTotal() {
       const q = Math.max(1, parseInt(qtyInput.value || 1));
-      const shipping = 49;
+      const shipping = q * unitPrice >= 999 ? 0 : 49;
       const total = (unitPrice * q) + shipping;
       totalEl.textContent = total;
     }
 
+    // Update total on quantity change
     qtyInput.addEventListener('input', updateTotal);
 
+    // Buy Now Action
     document.getElementById('buyNow').addEventListener('click', () => {
-      // Simple demo order flow
       const q = Math.max(1, parseInt(qtyInput.value || 1));
       orderMsg.style.display = 'block';
-      orderMsg.textContent = `Demo order: ${q} x {{ product.name }}. Total ₹${totalEl.textContent} — Payment flow not integrated.`;
-      setTimeout(() => { orderMsg.textContent = 'We will reach out with order details (demo).'; }, 3000);
+      orderMsg.innerHTML = `
+        <strong>✅ Order Received!</strong><br>
+        ${q} x {{ product.name }} | Total: ₹${totalEl.textContent}<br>
+        <em>This is a demo. Payment integration coming soon!</em>
+      `;
+      
+      // Smooth scroll to message
+      orderMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      
+      setTimeout(() => {
+        orderMsg.innerHTML = '<strong>Thank you!</strong> We will contact you with order details soon.';
+      }, 4000);
     });
+
+    // Initialize total
+    updateTotal();
   </script>
 </body>
 </html>

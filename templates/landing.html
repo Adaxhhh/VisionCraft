@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="VisionCraft - Empowering India's Artisans through AR">
+  <title>Welcome to VisionCraft | AR Art Discovery</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body class="landing-body">
+  
+  <div class="landing-container">
+    
+    <!-- Hero Section -->
+    <div class="landing-hero">
+      <div class="logo-large">
+        <i class="fas fa-palette"></i>
+      </div>
+      <h1 class="landing-title">VisionCraft</h1>
+      <p class="landing-subtitle">Discover Indian Handicrafts in Augmented Reality</p>
+      <p class="landing-tagline">Empowering artisans, connecting traditions with technology</p>
+    </div>
+
+    <!-- User Type Selection -->
+    <div class="user-type-selection">
+      <h2 class="selection-heading">Welcome! How would you like to continue?</h2>
+      
+      <div class="user-type-cards">
+        
+        <!-- Customer Card -->
+        <a href="{{ url_for('home') }}" class="user-type-card customer-card">
+          <div class="card-icon">
+            <i class="fas fa-shopping-bag"></i>
+          </div>
+          <h3 class="card-title">I'm a Customer</h3>
+          <p class="card-description">
+            Explore beautiful handicrafts, view them in AR, and support local artisans
+          </p>
+          <ul class="card-features">
+            <li><i class="fas fa-check-circle"></i> Browse Art Gallery</li>
+            <li><i class="fas fa-check-circle"></i> View in AR</li>
+            <li><i class="fas fa-check-circle"></i> Purchase Directly</li>
+            <li><i class="fas fa-check-circle"></i> Support Artisans</li>
+          </ul>
+          <div class="card-button">
+            Explore as Customer <i class="fas fa-arrow-right"></i>
+          </div>
+        </a>
+
+        <!-- Seller/Artisan Card -->
+        <a href="{{ url_for('seller_dashboard') }}" class="user-type-card seller-card">
+          <div class="card-icon">
+            <i class="fas fa-paint-brush"></i>
+          </div>
+          <h3 class="card-title">I'm an Artisan/Seller</h3>
+          <p class="card-description">
+            Showcase your crafts to the world, create 3D models, and grow your business
+          </p>
+          <ul class="card-features">
+            <li><i class="fas fa-check-circle"></i> Upload Your Art</li>
+            <li><i class="fas fa-check-circle"></i> Create 3D Showcases</li>
+            <li><i class="fas fa-check-circle"></i> Manage Sales</li>
+            <li><i class="fas fa-check-circle"></i> Track Analytics</li>
+          </ul>
+          <div class="card-button">
+            Start Selling <i class="fas fa-arrow-right"></i>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="landing-features">
+      <h3 class="features-heading">Why VisionCraft?</h3>
+      <div class="features-grid">
+        <div class="feature-item">
+          <i class="fas fa-cube feature-icon"></i>
+          <h4>AR Experience</h4>
+          <p>View handicrafts in your space before buying</p>
+        </div>
+        <div class="feature-item">
+          <i class="fas fa-handshake feature-icon"></i>
+          <h4>Direct Connection</h4>
+          <p>Connect directly with artisans</p>
+        </div>
+        <div class="feature-item">
+          <i class="fas fa-shield-alt feature-icon"></i>
+          <h4>Secure Payments</h4>
+          <p>Safe UPI and payment options</p>
+        </div>
+        <div class="feature-item">
+          <i class="fas fa-heart feature-icon"></i>
+          <h4>Support Local</h4>
+          <p>Empower Indian artisans</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="landing-footer">
+      <p>&copy; 2025 VisionCraft. Empowering artisans, preserving traditions.</p>
+    </div>
+
+  </div>
+
+  <style>
+    .landing-body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 0;
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    .landing-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* Hero Section */
+    .landing-hero {
+      text-align: center;
+      padding: 60px 20px 40px;
+      animation: fadeInDown 0.8s ease-out;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .logo-large {
+      font-size: 80px;
+      color: white;
+      margin-bottom: 20px;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .landing-title {
+      font-size: 4rem;
+      font-weight: 900;
+      color: white;
+      margin: 0 0 15px 0;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .landing-subtitle {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.95);
+      margin: 0 0 10px 0;
+    }
+
+    .landing-tagline {
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, 0.8);
+      font-style: italic;
+    }
+
+    /* User Type Selection */
+    .user-type-selection {
+      margin: 60px 0;
+      animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .selection-heading {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 40px;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .user-type-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 40px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .user-type-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 40px 30px;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .user-type-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    .user-type-card:hover::before {
+      left: 100%;
+    }
+
+    .user-type-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .card-icon {
+      font-size: 60px;
+      margin-bottom: 20px;
+      transition: transform 0.3s;
+    }
+
+    .user-type-card:hover .card-icon {
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    .customer-card .card-icon {
+      color: #667eea;
+    }
+
+    .seller-card .card-icon {
+      color: #764ba2;
+    }
+
+    .card-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin: 0 0 15px 0;
+      color: #2c3e50;
+    }
+
+    .card-description {
+      font-size: 1.05rem;
+      color: #555;
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+
+    .card-features {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 30px 0;
+    }
+
+    .card-features li {
+      padding: 10px 0;
+      font-size: 1rem;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card-features i {
+      color: #2ecc71;
+      font-size: 1.1rem;
+    }
+
+    .card-button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 30px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      transition: all 0.3s;
+    }
+
+    .user-type-card:hover .card-button {
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+      transform: scale(1.05);
+    }
+
+    /* Features Section */
+    .landing-features {
+      margin: 80px 0 40px;
+      animation: fadeInUp 0.8s ease-out 0.4s both;
+    }
+
+    .features-heading {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 40px;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+    }
+
+    .feature-item {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 30px 20px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s;
+    }
+
+    .feature-item:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-5px);
+    }
+
+    .feature-icon {
+      font-size: 40px;
+      color: white;
+      margin-bottom: 15px;
+    }
+
+    .feature-item h4 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: white;
+      margin: 0 0 10px 0;
+    }
+
+    .feature-item p {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.9);
+      margin: 0;
+    }
+
+    /* Footer */
+    .landing-footer {
+      text-align: center;
+      padding: 40px 20px 20px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.95rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      margin-top: 60px;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .landing-title {
+        font-size: 2.5rem;
+      }
+
+      .landing-subtitle {
+        font-size: 1.2rem;
+      }
+
+      .logo-large {
+        font-size: 60px;
+      }
+
+      .selection-heading,
+      .features-heading {
+        font-size: 1.5rem;
+      }
+
+      .user-type-cards {
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+
+      .user-type-card {
+        padding: 30px 25px;
+      }
+
+      .card-title {
+        font-size: 1.5rem;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+</body>
+</html>

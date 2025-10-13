@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ art.title }} by {{ art.artist }}{% endblock title %}
+
+{% block content %}
+  <div class="art-page">
+    <a href="{{ url_for('home') }}" class="back-link"><i class="fas fa-chevron-left"></i> Back to Feed</a>
+    
+    <div class="art-image-container">
+      <img src="{{ art.image }}" 
+           alt="{{ art.title }}" 
+           onerror="this.onerror=null;this.src='https://placehold.co/600x600/667eea/ffffff?text=Art+Image';" 
+           class="main-art-image">
+    </div>
+
+    <div class="art-info-section">
+      <span class="art-tag">Featured</span>
+      <h1 class="art-title">{{ art.title }}</h1>
+      <p class="art-artist-detail">by **{{ art.artist }}**</p>
+
+      <div class="pricing-ar-block">
+        <div class="price-detail" aria-label="Estimated Price">₹{{ art.price }}</div>
+        <a href="{{ url_for('view_in_ar', art_id=art.id) }}" class="btn ar-link-btn" aria-label="View {{ art.title }} in augmented reality">
+          <i class="fas fa-vr-cardboard"></i> View in AR
+        </a>
+      </div>
+
+      <h3 class="section-heading">Description</h3>
+      <p class="art-description-long">{{ art.description }}</p>
+
+      <div class="interaction-buttons">
+        <a href="{{ url_for('purchase', art_id=art.id) }}" class="btn primary-action"><i class="fas fa-shopping-bag"></i> Purchase Now</a>
+        <button class="btn secondary-action"><i class="fas fa-share-alt"></i> Share</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Share button functionality
+    document.querySelector('.secondary-action').addEventListener('click', () => {
+        if (navigator.share) {
+            navigator.share({
+                title: '{{ art.title }}',
+                text: 'Check out {{ art.title }} by {{ art.artist }} on VisionCraft!',
+                url: window.location.href
+            }).catch(err => console.log('Error sharing:', err));
+        } else {
+            // Fallback: copy link to clipboard
+            navigator.clipboard.writeText(window.location.href);
+            alert('Link copied to clipboard!');
+        }
+    });
+  </script>
+{% endblock content %}

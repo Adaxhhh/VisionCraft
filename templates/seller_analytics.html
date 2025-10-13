@@ -114,9 +114,9 @@
                   <br><span class="text-muted">{{ art.category }}</span>
                 </div>
               </td>
-              <td><span class="metric-badge">{{ art.get('views', 0) }}</span></td>
-              <td><span class="metric-badge">{{ art.get('favorites', 0) }}</span></td>
-              <td><span class="metric-badge">{{ art.get('ar_tries', 0) }}</span></td>
+              <td><span class="metric-badge">{{ art.views }}</span></td>
+              <td><span class="metric-badge">{{ art.get_likes_count() }}</span></td>
+              <td><span class="metric-badge">{{ art.get_ar_tries_count() }}</span></td>
               <td>
                 <div class="rating-display">
                   <i class="fas fa-star" style="color: #FFD700;"></i> {{ art.rating }}

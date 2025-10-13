@@ -278,79 +278,57 @@
         <!-- Notifications Settings -->
         <div class="glass-card settings-card">
           <h3><i class="fas fa-bell"></i> Notifications</h3>
-          <form method="POST" action="{{ url_for('update_settings') }}">
+          <form method="POST" action="{{ url_for('profile') }}">
             <div class="setting-item">
               <label class="toggle-label">
-                <input type="checkbox" name="email_notifications" checked>
+                <input type="checkbox" name="email_notifications" checked disabled>
                 <span class="toggle-slider"></span>
                 <span class="toggle-text">Email Notifications</span>
               </label>
-              <p class="setting-description">Receive updates about your orders and new artworks</p>
+              <p class="setting-description">Receive updates about your orders and new artworks (Coming soon)</p>
             </div>
             
             <div class="setting-item">
               <label class="toggle-label">
-                <input type="checkbox" name="marketing_emails">
+                <input type="checkbox" name="marketing_emails" disabled>
                 <span class="toggle-slider"></span>
                 <span class="toggle-text">Marketing Emails</span>
               </label>
-              <p class="setting-description">Get special offers and promotions</p>
+              <p class="setting-description">Get special offers and promotions (Coming soon)</p>
             </div>
-            
-            <button type="submit" class="btn btn-primary">
-              <i class="fas fa-save"></i> Save Preferences
-            </button>
           </form>
         </div>
 
         <!-- Privacy Settings -->
         <div class="glass-card settings-card">
           <h3><i class="fas fa-lock"></i> Privacy</h3>
-          <form method="POST" action="{{ url_for('update_settings') }}">
+          <form method="POST" action="{{ url_for('profile') }}">
             <div class="setting-item">
               <label class="toggle-label">
-                <input type="checkbox" name="profile_public" checked>
+                <input type="checkbox" name="profile_public" checked disabled>
                 <span class="toggle-slider"></span>
                 <span class="toggle-text">Public Profile</span>
               </label>
-              <p class="setting-description">Allow others to view your profile and uploads</p>
+              <p class="setting-description">Allow others to view your profile and uploads (Coming soon)</p>
             </div>
             
             <div class="setting-item">
               <label class="toggle-label">
-                <input type="checkbox" name="show_purchases">
+                <input type="checkbox" name="show_purchases" disabled>
                 <span class="toggle-slider"></span>
                 <span class="toggle-text">Show Purchase History</span>
               </label>
-              <p class="setting-description">Display your purchases on your public profile</p>
+              <p class="setting-description">Display your purchases on your public profile (Coming soon)</p>
             </div>
-            
-            <button type="submit" class="btn btn-primary">
-              <i class="fas fa-save"></i> Save Settings
-            </button>
           </form>
         </div>
 
         <!-- Change Password -->
         <div class="glass-card settings-card">
           <h3><i class="fas fa-key"></i> Change Password</h3>
-          <form method="POST" action="{{ url_for('change_password') }}">
-            <div class="form-group">
-              <label for="current_password">Current Password</label>
-              <input type="password" id="current_password" name="current_password" required>
-            </div>
-            <div class="form-group">
-              <label for="new_password">New Password</label>
-              <input type="password" id="new_password" name="new_password" required minlength="8">
-            </div>
-            <div class="form-group">
-              <label for="confirm_password">Confirm New Password</label>
-              <input type="password" id="confirm_password" name="confirm_password" required minlength="8">
-            </div>
-            <button type="submit" class="btn btn-primary">
-              <i class="fas fa-key"></i> Update Password
-            </button>
-          </form>
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Password change feature coming soon. Contact support to reset your password.
+          </div>
         </div>
 
         <!-- Danger Zone -->

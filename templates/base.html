@@ -64,7 +64,7 @@
     </a>
     <a href="{{ url_for('events') }}" class="nav-item {% if request.path == url_for('events') %}active{% endif %}">
       <i class="fas fa-calendar"></i>
-      <span>Events</span>
+      <span data-lang-key="events">Events</span>
     </a>
     <a href="{{ url_for('profile') }}" class="nav-item {% if request.path == url_for('profile') %}active{% endif %}">
       <i class="fas fa-user-circle"></i>
@@ -120,6 +120,7 @@
 
     const translations = {
       en: {
+        // Navigation
         app_title: 'Art Discovery',
         app_subtitle: 'Explore your next inspiration',
         search: 'Search',
@@ -127,25 +128,90 @@
         upload: 'Upload',
         likes: 'Likes',
         profile: 'Profile',
+        events: 'Events',
+        seller: 'Seller',
+        cart: 'Cart',
+        orders: 'Orders',
+        
+        // Common
         footer_text: 'Art Discovery Platform. Explore, Connect, Create.',
         featured_artworks: 'Featured Artworks',
         featured_subtitle: 'Discover the latest and greatest creations from our global community.',
         view_in_ar: 'View in AR',
-        by: 'by'
+        by: 'by',
+        price: 'Price',
+        category: 'Category',
+        sort: 'Sort',
+        filter: 'Filter',
+        
+        // Actions
+        add_to_cart: 'Add to Cart',
+        buy_now: 'Buy Now',
+        checkout: 'Checkout',
+        place_order: 'Place Order',
+        login: 'Login',
+        register: 'Register',
+        logout: 'Logout',
+        save: 'Save',
+        cancel: 'Cancel',
+        delete: 'Delete',
+        edit: 'Edit',
+        share: 'Share',
+        
+        // Product
+        description: 'Description',
+        artist: 'Artist',
+        rating: 'Rating',
+        reviews: 'Reviews',
+        stock: 'In Stock',
+        out_of_stock: 'Out of Stock'
       },
       hi: {
+        // Navigation  
         app_title: 'कला खोज',
         app_subtitle: 'अपनी अगली प्रेरणा खोजें',
         search: 'खोजें',
-        home: 'घर',
+        home: 'होम',
         upload: 'अपलोड',
         likes: 'पसंद',
         profile: 'प्रोफाइल',
+        events: 'कार्यक्रम',
+        seller: 'विक्रेता',
+        cart: 'कार्ट',
+        orders: 'ऑर्डर',
+        
+        // Common
         footer_text: 'कला खोज मंच। खोजें, जुड़ें, बनाएं।',
-        featured_artworks: 'फीचर्ड कलाकृतियां',
-        featured_subtitle: 'हमारे वैश्विक समुदाय की नवीनतम और श्रेष्ठ रचनाओं को खोजें।',
+        featured_artworks: 'विशेष कलाकृतियां',
+        featured_subtitle: 'हमारे समुदाय की नवीनतम और बेहतरीन रचनाएं खोजें।',
         view_in_ar: 'AR में देखें',
-        by: 'द्वारा'
+        by: 'द्वारा',
+        price: 'कीमत',
+        category: 'श्रेणी',
+        sort: 'क्रमबद्ध करें',
+        filter: 'फ़िल्टर',
+        
+        // Actions
+        add_to_cart: 'कार्ट में जोड़ें',
+        buy_now: 'अभी खरीदें',
+        checkout: 'चेकआउट',
+        place_order: 'ऑर्डर करें',
+        login: 'लॉगिन',
+        register: 'रजिस्टर',
+        logout: 'लॉगआउट',
+        save: 'सहेजें',
+        cancel: 'रद्द करें',
+        delete: 'हटाएं',
+        edit: 'संपादित करें',
+        share: 'शेयर करें',
+        
+        // Product
+        description: 'विवरण',
+        artist: 'कलाकार',
+        rating: 'रेटिंग',
+        reviews: 'समीक्षा',
+        stock: 'स्टॉक में',
+        out_of_stock: 'स्टॉक में नहीं'
       }
     };
 

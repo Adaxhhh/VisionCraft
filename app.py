@@ -1,702 +1,797 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-import os
+"""
+VisionCraft AR Marketplace - Complete E-commerce Application
+Full-featured application with authentication, shopping cart, orders, and more
+"""
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
+from models import db, User, Artwork, CartItem, Order, OrderItem, Like, Event, EventRSVP
+import os
+from datetime import datetime, timedelta
+import secrets
 
+# Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get('VISIONCRAFT_SECRET', 'dev-secret-change-me')
 
-# --- Advanced Data Structure: Artworks and Artist Info ---
-# Added more complex fields like artist, category, model_url, and likes_count
-artworks = [
-    {
-        "id": 1,
-        "title": "Terracotta Pot of Marwar",
-        "artist": "Sanjay Varma",
-        "price": 299,
-        "image": "/static/images/pottery.jpg",
-        "model_url": "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
-        "category": "Pottery",
-        "likes_count": 145,
-        "rating": 4.8,
-        "description": "Handmade terracotta pot from Rajasthan, featuring traditional Marwari motifs. Ideal for rustic decor.",
-        "state": "Rajasthan",
-        "artisan_video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-        "video_thumbnail": "https://placehold.co/400x300/8B4513/ffffff?text=Making+Pottery",
-        "making_process": "Traditional clay molding and hand-painting technique passed down through generations",
-        "views": 1247,
-        "favorites": 89,
-        "ar_tries": 156
-    },
-    {
-        "id": 2,
-        "title": "Cosmic Elephant Toy",
-        "artist": "Priya Sharma",
-        "price": 499,
-        "image": "/static/images/wooden_toy.jpg",
-        "model_url": "https://modelviewer.dev/shared-assets/models/RobotExpressive/RobotExpressive.glb",
-        "category": "Woodcraft",
-        "likes_count": 92,
-        "rating": 4.5,
-        "description": "A beautifully carved wooden elephant toy from Karnataka, painted with vibrant, non-toxic colors.",
-        "state": "Karnataka",
-        "artisan_video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-        "video_thumbnail": "https://placehold.co/400x300/D2691E/ffffff?text=Wood+Carving",
-        "making_process": "Hand-carved from sustainable sandalwood with traditional Channapatna techniques",
-        "views": 892,
-        "favorites": 67,
-        "ar_tries": 134
-    },
-    {
-        "id": 3,
-        "title": "Himalayan Bamboo Weave",
-        "artist": "Tenzin Gyatso",
-        "price": 349,
-        "image": "/static/images/basket.jpg",
-        "model_url": "https://modelviewer.dev/shared-assets/models/Chair/Chair.glb",
-        "category": "Weaving",
-        "likes_count": 301,
-        "rating": 4.9,
-        "description": "Eco-friendly, hand-woven bamboo basket from the foothills of Assam. Durable and lightweight."
-    },
-    {
-        "id": 4,
-        "title": "Indigo Dye Scarf",
-        "artist": "Meena Khan",
-        "price": 899,
-        "image": "https://placehold.co/400x300/3c5a77/ffffff?text=Indigo+Scarf",
-        "model_url": "https://modelviewer.dev/shared-assets/models/glTF-Sample-Assets/Models/DamagedHelmet/glTF/DamagedHelmet.gltf",
-        "category": "Textiles",
-        "likes_count": 210,
-        "rating": 4.6,
-        "description": "Traditional block-printed cotton scarf using natural indigo dyes."
-    },
-    {
-        "id": 5,
-        "title": "Bronze Ganesha Sculpture",
-        "artist": "Ramesh Patel",
-        "price": 1599,
-        "image": "https://placehold.co/400x300/8B4513/ffffff?text=Ganesha",
-        "model_url": "https://modelviewer.dev/shared-assets/models/glTF-Sample-Assets/Models/BrainStem/glTF/BrainStem.gltf",
-        "category": "Sculpture",
-        "likes_count": 456,
-        "rating": 5.0,
-        "description": "Exquisite bronze sculpture of Lord Ganesha, handcrafted using ancient lost-wax casting technique."
-    },
-    {
-        "id": 6,
-        "title": "Madhubani Fish Painting",
-        "artist": "Lakshmi Devi",
-        "price": 799,
-        "image": "https://placehold.co/400x300/FF6347/ffffff?text=Madhubani+Art",
-        "model_url": "https://modelviewer.dev/shared-assets/models/glTF-Sample-Assets/Models/MetalRoughSpheres/glTF/MetalRoughSpheres.gltf",
-        "category": "Painting",
-        "likes_count": 234,
-        "rating": 4.7,
-        "description": "Traditional Madhubani folk art from Bihar, depicting colorful fish symbolizing prosperity."
-    },
-    {
-        "id": 7,
-        "title": "Kashmiri Papier-Mâché Box",
-        "artist": "Abdul Rashid",
-        "price": 649,
-        "image": "https://placehold.co/400x300/DAA520/000000?text=Papier+Mache",
-        "model_url": "https://modelviewer.dev/shared-assets/models/glTF-Sample-Assets/Models/Box/glTF/Box.gltf",
-        "category": "Decorative",
-        "likes_count": 178,
-        "rating": 4.4,
-        "description": "Intricately hand-painted papier-mâché box with traditional Kashmiri floral patterns."
-    },
-    {
-        "id": 8,
-        "title": "Temple Bell (Ghanti)",
-        "artist": "Krishna Moorthy",
-        "price": 459,
-        "image": "https://placehold.co/400x300/FFD700/000000?text=Temple+Bell",
-        "model_url": "https://modelviewer.dev/shared-assets/models/glTF-Sample-Assets/Models/MetalRoughSpheresNoTextures/glTF/MetalRoughSpheresNoTextures.gltf",
-        "category": "Metalwork",
-        "likes_count": 321,
-        "rating": 4.8,
-        "description": "Brass temple bell with melodious sound, handcrafted in traditional South Indian style."
-    },
-    {
-        "id": 9,
-        "title": "Warli Art Wall Hanging",
-        "artist": "Sunita Patil",
-        "price": 549,
-        "image": "https://placehold.co/400x300/8B7355/ffffff?text=Warli+Art",
-        "model_url": "https://modelviewer.dev/shared-assets/models/glTF-Sample-Assets/Models/Triangle/glTF/Triangle.gltf",
-        "category": "Painting",
-        "likes_count": 267,
-        "rating": 4.6,
-        "description": "Authentic Warli tribal art from Maharashtra, depicting daily village life in geometric patterns."
-    },
-    {
-        "id": 10,
-        "title": "Rajasthani Silver Jewelry Set",
-        "artist": "Anjali Sharma",
-        "price": 2499,
-        "image": "https://placehold.co/400x300/C0C0C0/000000?text=Silver+Jewelry",
-        "model_url": "https://modelviewer.dev/shared-assets/models/glTF-Sample-Assets/Models/DragonAttenuation/glTF/DragonAttenuation.gltf",
-        "category": "Jewelry",
-        "likes_count": 589,
-        "rating": 4.9,
-        "description": "Handcrafted oxidized silver jewelry with traditional Rajasthani designs and gemstone inlays."
-    },
-    {
-        "id": 11,
-        "title": "Blue Pottery Vase",
-        "artist": "Mohan Joshi",
-        "price": 749,
-        "image": "https://placehold.co/400x300/4169E1/ffffff?text=Blue+Pottery",
-        "model_url": "https://modelviewer.dev/shared-assets/models/glTF-Sample-Assets/Models/WaterBottle/glTF/WaterBottle.gltf",
-        "category": "Pottery",
-        "likes_count": 412,
-        "rating": 4.7,
-        "description": "Stunning blue pottery vase from Jaipur with Persian-inspired floral motifs."
-    },
-    {
-        "id": 12,
-        "title": "Cane Furniture Chair",
-        "artist": "Joseph D'Souza",
-        "price": 3299,
-        "image": "https://placehold.co/400x300/D2691E/ffffff?text=Cane+Chair",
-        "model_url": "https://modelviewer.dev/shared-assets/models/Chair/Chair.glb",
-        "category": "Furniture",
-        "likes_count": 156,
-        "rating": 4.5,
-        "description": "Ergonomic cane chair with contemporary design, perfect blend of comfort and aesthetics."
-    },
-]
+# Configuration
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///visioncraft.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-# Simple in-memory storage for likes (Advanced Feature Placeholder)
-# In a real app, this would use a database
-liked_art_ids = [2, 4] # Artworks liked by the current user
+# Initialize extensions
+db.init_app(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Please log in to access this page.'
 
-# User profile data (in-memory storage)
-user_profile = {
-    "username": "Art_Explorer_99",
-    "email": "explorer@visioncraft.com",
-    "joined": "March 2024",
-    "uploads_count": 0,
-    "likes_given": len(liked_art_ids),
-    "orders_count": 3,
-    "total_spent": 1497,
-    "bio": "Curator of handcrafted wonders. Supporting local artisans globally.",
-    "phone": "+91 98765 43210",
-    "location": "Mumbai, Maharashtra",
-    "avatar": None,
-    "rsvps": []  # simple RSVP store per current user
-}
-
-# Local events & workshops (in-memory). In a real app, fetch from DB or an API
-EVENTS = [
-    {
-        "id": 1,
-        "title": "Jaipur Craft Fair",
-        "type": "Fair",
-        "date": "2025-10-20",
-        "time": "10:00 AM",
-        "location": "Jaipur, Rajasthan",
-        "address": "Rava Bazaar Grounds",
-        "description": "Explore hundreds of artisan stalls, live demos, and regional food courts.",
-        "tags": ["Pottery", "Textiles", "Folk Art"],
-    },
-    {
-        "id": 2,
-        "title": "Hands-on Pottery Workshop",
-        "type": "Workshop",
-        "date": "2025-10-22",
-        "time": "02:00 PM",
-        "location": "Pune, Maharashtra",
-        "address": "Kala Studio, FC Road",
-        "description": "Learn wheel throwing and glazing basics with master potter Meera Kulkarni.",
-        "tags": ["Pottery", "Beginner Friendly"],
-    },
-    {
-        "id": 3,
-        "title": "Textile Natural Dyeing Class",
-        "type": "Class",
-        "date": "2025-10-25",
-        "time": "11:00 AM",
-        "location": "New Delhi, Delhi",
-        "address": "Dilli Haat, INA",
-        "description": "Hands-on introduction to indigo and madder dyeing with sustainable techniques.",
-        "tags": ["Textiles", "Eco"],
-    },
-    {
-        "id": 4,
-        "title": "Channapatna Toys Showcase",
-        "type": "Exhibition",
-        "date": "2025-10-28",
-        "time": "04:00 PM",
-        "location": "Bengaluru, Karnataka",
-        "address": "Crafts Museum, MG Road",
-        "description": "Meet woodcraft artisans, try your hand at eco-friendly lacquering.",
-        "tags": ["Woodcraft", "Family"],
-    },
-]
-
-# Upload settings
+# File upload configuration
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
 MODELS_DIR = os.path.join(STATIC_DIR, 'models')
 IMAGES_DIR = os.path.join(STATIC_DIR, 'images')
+AVATARS_DIR = os.path.join(STATIC_DIR, 'avatars')
 
 ALLOWED_MODEL_EXT = {'.glb', '.gltf'}
 ALLOWED_IMAGE_EXT = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
 
-os.makedirs(MODELS_DIR, exist_ok=True)
-os.makedirs(IMAGES_DIR, exist_ok=True)
+# Ensure directories exist
+for directory in [MODELS_DIR, IMAGES_DIR, AVATARS_DIR]:
+    os.makedirs(directory, exist_ok=True)
 
-# ----------------- ROUTES -----------------
+# Flask-Login user loader
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
-@app.before_request
-def infer_role_from_path():
-    """Infer role based on path if not explicitly set.
-    Defaults to 'customer'. Visiting seller paths sets role to 'seller'.
-    """
-    try:
-        role = session.get('role')
-        path = request.path or ''
-        if path.startswith('/seller') and role != 'seller':
-            session['role'] = 'seller'
-        elif role is None:
-            session['role'] = 'customer'
-    except Exception:
-        # Session might not be available in some contexts
-        pass
+# Context processor to inject cart count and user info
+@app.context_processor
+def inject_user_data():
+    cart_count = 0
+    if current_user.is_authenticated:
+        cart_count = current_user.get_cart_count()
+    return dict(cart_count=cart_count)
 
-@app.route('/enter/customer')
-def enter_customer():
-    session['role'] = 'customer'
-    return redirect(url_for('home'))
+# ==================== AUTHENTICATION ROUTES ====================
 
-@app.route('/enter/seller')
-def enter_seller():
-    session['role'] = 'seller'
-    return redirect(url_for('seller_analytics'))
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """User registration"""
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        role = request.form.get('role', 'customer')
+        
+        # Validation
+        if not username or not email or not password:
+            flash('All fields are required!', 'error')
+            return render_template('register.html')
+        
+        if password != confirm_password:
+            flash('Passwords do not match!', 'error')
+            return render_template('register.html')
+        
+        if len(password) < 6:
+            flash('Password must be at least 6 characters long!', 'error')
+            return render_template('register.html')
+        
+        # Check if user exists
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists!', 'error')
+            return render_template('register.html')
+        
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered!', 'error')
+            return render_template('register.html')
+        
+        # Create new user
+        user = User(username=username, email=email, role=role)
+        user.set_password(password)
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        flash(f'Account created successfully! Welcome, {username}!', 'success')
+        login_user(user)
+        
+        if role == 'seller':
+            return redirect(url_for('seller_analytics'))
+        return redirect(url_for('home'))
+    
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """User login"""
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        remember = request.form.get('remember', False)
+        
+        user = User.query.filter_by(username=username).first()
+        
+        if user and user.check_password(password):
+            # Update last login
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+            
+            login_user(user, remember=remember)
+            flash(f'Welcome back, {user.username}!', 'success')
+            
+            # Redirect to next page or home
+            next_page = request.args.get('next')
+            if next_page:
+                return redirect(next_page)
+            
+            if user.role == 'seller':
+                return redirect(url_for('seller_analytics'))
+            return redirect(url_for('home'))
+        else:
+            flash('Invalid username or password!', 'error')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    """User logout"""
+    logout_user()
+    flash('You have been logged out successfully!', 'success')
+    return redirect(url_for('landing'))
+
+# ==================== PUBLIC ROUTES ====================
 
 @app.route('/')
 def landing():
     """Landing page - choose between customer or seller"""
+    if current_user.is_authenticated:
+        if current_user.role == 'seller':
+            return redirect(url_for('seller_analytics'))
+        return redirect(url_for('home'))
     return render_template('landing.html')
 
 @app.route('/home')
 def home():
     """Customer home page with artwork gallery"""
-    return render_template('home.html', artworks=artworks)
-
-@app.route('/seller')
-def seller_dashboard():
-    """Seller/Artisan dashboard with analytics"""
-    return redirect(url_for('seller_analytics'))
-
-@app.route('/seller/analytics')
-def seller_analytics():
-    """Seller Analytics Dashboard"""
-    return render_template('seller_analytics.html', artworks=artworks)
+    # Get filter and sort parameters
+    category = request.args.get('category', 'all')
+    sort_by = request.args.get('sort', 'default')
+    state = request.args.get('state', '')
+    
+    # Base query - only active artworks
+    query = Artwork.query.filter_by(is_active=True)
+    
+    # Apply filters
+    if category != 'all':
+        query = query.filter_by(category=category)
+    
+    if state:
+        query = query.filter_by(state=state)
+    
+    # Apply sorting
+    if sort_by == 'price-low':
+        query = query.order_by(Artwork.price.asc())
+    elif sort_by == 'price-high':
+        query = query.order_by(Artwork.price.desc())
+    elif sort_by == 'rating':
+        query = query.order_by(Artwork.rating.desc())
+    elif sort_by == 'likes':
+        # Sort by likes count (this requires a subquery or join)
+        from sqlalchemy import func
+        query = query.outerjoin(Like).group_by(Artwork.id).order_by(func.count(Like.id).desc())
+    else:
+        query = query.order_by(Artwork.created_at.desc())
+    
+    artworks = query.all()
+    
+    # Get user's liked artworks
+    liked_artwork_ids = []
+    if current_user.is_authenticated:
+        liked_artwork_ids = [like.artwork_id for like in current_user.likes.all()]
+    
+    return render_template('home.html', artworks=artworks, liked_artwork_ids=liked_artwork_ids)
 
 @app.route('/art/<int:art_id>')
 def art_detail(art_id):
-    art = next((a for a in artworks if a["id"] == art_id), None)
-    if art is None:
-        return render_template('error.html', message="Artwork not found."), 404
-    return render_template('art_detail.html', art=art)
+    """Artwork detail page"""
+    art = Artwork.query.get_or_404(art_id)
+    
+    # Increment view count
+    art.views += 1
+    db.session.commit()
+    
+    # Check if user has liked this artwork
+    is_liked = False
+    if current_user.is_authenticated:
+        is_liked = Like.query.filter_by(user_id=current_user.id, artwork_id=art_id).first() is not None
+    
+    # Get related artworks (same category)
+    related_artworks = Artwork.query.filter(
+        Artwork.category == art.category,
+        Artwork.id != art_id,
+        Artwork.is_active == True
+    ).limit(4).all()
+    
+    return render_template('art_detail.html', art=art, is_liked=is_liked, related_artworks=related_artworks)
 
 @app.route('/ar/<int:art_id>')
 def view_in_ar(art_id):
-    art = next((a for a in artworks if a["id"] == art_id), None)
-    if art is None:
-        return render_template('error.html', message="Artwork not found for AR view."), 404
+    """AR viewer for artwork"""
+    art = Artwork.query.get_or_404(art_id)
     return render_template('ar_viewer.html', art=art)
 
 @app.route('/search')
 def search():
-    query = request.args.get('q', '').lower()
+    """Search artworks"""
+    query_text = request.args.get('q', '').lower().strip()
     
-    # Advanced Feature: Implement in-memory search across title, category, and artist
     search_results = []
-    if query:
-        search_results = [
-            art for art in artworks 
-            if query in art['title'].lower() or 
-               query in art['category'].lower() or
-               query in art['artist'].lower()
-        ]
+    if query_text:
+        search_results = Artwork.query.filter(
+            Artwork.is_active == True
+        ).filter(
+            (Artwork.title.ilike(f'%{query_text}%')) |
+            (Artwork.category.ilike(f'%{query_text}%')) |
+            (Artwork.artist_name.ilike(f'%{query_text}%')) |
+            (Artwork.description.ilike(f'%{query_text}%'))
+        ).all()
     
-    return render_template('search.html', query=query, search_results=search_results)
+    return render_template('search.html', query=query_text, search_results=search_results)
 
-@app.route('/upload')
-def upload():
-    if session.get('role') != 'seller':
-        return render_template('error.html', message="Uploads are available only for sellers. Please choose 'I'm an Artisan/Seller' on the landing page."), 403
-    return render_template('upload.html')
+# ==================== CART ROUTES ====================
 
+@app.route('/cart')
+@login_required
+def cart():
+    """Shopping cart page"""
+    cart_items = current_user.cart_items.all()
+    
+    # Calculate totals
+    subtotal = sum(item.get_subtotal() for item in cart_items)
+    shipping_fee = 149.0 if subtotal > 0 else 0
+    total = subtotal + shipping_fee
+    
+    return render_template('cart.html', cart_items=cart_items, subtotal=subtotal, 
+                          shipping_fee=shipping_fee, total=total)
 
-@app.route('/upload', methods=['POST'])
-def upload_post():
-    if session.get('role') != 'seller':
-        return render_template('error.html', message="Uploads are available only for sellers. Please choose 'I'm an Artisan/Seller' on the landing page."), 403
-    """Handle uploaded image and/or 3D model files, create a new artwork entry.
+@app.route('/api/cart/add/<int:art_id>', methods=['POST'])
+@login_required
+def add_to_cart(art_id):
+    """Add artwork to cart"""
+    artwork = Artwork.query.get_or_404(art_id)
+    
+    # Check if item already in cart
+    cart_item = CartItem.query.filter_by(
+        user_id=current_user.id,
+        artwork_id=art_id
+    ).first()
+    
+    if cart_item:
+        # Increase quantity
+        cart_item.quantity += 1
+    else:
+        # Create new cart item
+        cart_item = CartItem(user_id=current_user.id, artwork_id=art_id, quantity=1)
+        db.session.add(cart_item)
+    
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f'{artwork.title} added to cart!',
+        'cart_count': current_user.get_cart_count()
+    })
 
-    Saves images to /static/images and models to /static/models and appends
-    a new artwork dictionary to the in-memory `artworks` list.
-    """
+@app.route('/api/cart/update/<int:cart_item_id>', methods=['POST'])
+@login_required
+def update_cart_item(cart_item_id):
+    """Update cart item quantity"""
+    cart_item = CartItem.query.get_or_404(cart_item_id)
+    
+    # Verify ownership
+    if cart_item.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    
+    quantity = request.json.get('quantity', 1)
+    
+    if quantity <= 0:
+        db.session.delete(cart_item)
+    else:
+        cart_item.quantity = quantity
+    
+    db.session.commit()
+    
+    return jsonify({'success': True, 'cart_count': current_user.get_cart_count()})
+
+@app.route('/api/cart/remove/<int:cart_item_id>', methods=['DELETE'])
+@login_required
+def remove_from_cart(cart_item_id):
+    """Remove item from cart"""
+    cart_item = CartItem.query.get_or_404(cart_item_id)
+    
+    # Verify ownership
+    if cart_item.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    
+    db.session.delete(cart_item)
+    db.session.commit()
+    
+    return jsonify({'success': True, 'cart_count': current_user.get_cart_count()})
+
+# ==================== CHECKOUT & ORDER ROUTES ====================
+
+@app.route('/checkout')
+@login_required
+def checkout():
+    """Checkout page"""
+    cart_items = current_user.cart_items.all()
+    
+    if not cart_items:
+        flash('Your cart is empty!', 'error')
+        return redirect(url_for('cart'))
+    
+    # Calculate totals
+    subtotal = sum(item.get_subtotal() for item in cart_items)
+    shipping_fee = 149.0
+    total = subtotal + shipping_fee
+    
+    return render_template('checkout.html', cart_items=cart_items, 
+                          subtotal=subtotal, shipping_fee=shipping_fee, total=total)
+
+@app.route('/checkout/process', methods=['POST'])
+@login_required
+def process_checkout():
+    """Process checkout and create order"""
+    cart_items = current_user.cart_items.all()
+    
+    if not cart_items:
+        flash('Your cart is empty!', 'error')
+        return redirect(url_for('cart'))
+    
     # Get form data
-    title = request.form.get('title', 'Untitled')
-    description = request.form.get('description', '')
-    category = request.form.get('category', 'Other')
-    price = request.form.get('price', 0)
-    artist_name = request.form.get('artist_name', 'Anonymous Artist')
-    email = request.form.get('email', '')
-    phone = request.form.get('phone', '')
-    location = request.form.get('location', '')
+    shipping_name = request.form.get('name', '').strip()
+    shipping_email = request.form.get('email', '').strip()
+    shipping_phone = request.form.get('phone', '').strip()
+    shipping_address = request.form.get('address', '').strip()
+    shipping_city = request.form.get('city', '').strip()
+    shipping_state = request.form.get('state', '').strip()
+    shipping_pincode = request.form.get('pincode', '').strip()
+    payment_method = request.form.get('payment_method', 'COD')
+    upi_id = request.form.get('upi_id', '')
+    
+    # Validation
+    if not all([shipping_name, shipping_email, shipping_phone, shipping_address, 
+                shipping_city, shipping_state, shipping_pincode]):
+        flash('Please fill in all shipping details!', 'error')
+        return redirect(url_for('checkout'))
+    
+    # Calculate totals
+    subtotal = sum(item.get_subtotal() for item in cart_items)
+    shipping_fee = 149.0
+    total = subtotal + shipping_fee
+    
+    # Generate order number
+    order_number = f'VC-{datetime.utcnow().strftime("%Y%m%d")}-{secrets.token_hex(4).upper()}'
+    
+    # Create order
+    order = Order(
+        order_number=order_number,
+        user_id=current_user.id,
+        status='pending',
+        payment_method=payment_method,
+        subtotal=subtotal,
+        shipping_fee=shipping_fee,
+        total_amount=total,
+        shipping_name=shipping_name,
+        shipping_email=shipping_email,
+        shipping_phone=shipping_phone,
+        shipping_address=shipping_address,
+        shipping_city=shipping_city,
+        shipping_state=shipping_state,
+        shipping_pincode=shipping_pincode,
+        upi_id=upi_id
+    )
+    
+    db.session.add(order)
+    db.session.flush()  # Get order ID
+    
+    # Create order items
+    for cart_item in cart_items:
+        order_item = OrderItem(
+            order_id=order.id,
+            artwork_id=cart_item.artwork_id,
+            artwork_title=cart_item.artwork.title,
+            artwork_price=cart_item.artwork.price,
+            quantity=cart_item.quantity,
+            subtotal=cart_item.get_subtotal()
+        )
+        db.session.add(order_item)
+        
+        # Update artwork stock
+        cart_item.artwork.stock_quantity -= cart_item.quantity
+    
+    # Clear cart
+    for cart_item in cart_items:
+        db.session.delete(cart_item)
+    
+    db.session.commit()
+    
+    flash('Order placed successfully!', 'success')
+    return redirect(url_for('order_confirmation', order_id=order.id))
 
-    # Get uploaded files
-    image = request.files.get('image')
-    model = request.files.get('model')
+@app.route('/order/<int:order_id>')
+@login_required
+def order_confirmation(order_id):
+    """Order confirmation page"""
+    order = Order.query.get_or_404(order_id)
+    
+    # Verify ownership
+    if order.user_id != current_user.id:
+        flash('Unauthorized access!', 'error')
+        return redirect(url_for('home'))
+    
+    order_items = order.items.all()
+    
+    return render_template('order_confirmation.html', order=order, order_items=order_items)
 
-    image_url = None
-    model_url = None
+@app.route('/orders')
+@login_required
+def my_orders():
+    """User's order history"""
+    orders = current_user.orders.order_by(Order.created_at.desc()).all()
+    return render_template('my_orders.html', orders=orders)
 
-    # Save image if provided
-    if image and image.filename:
-        filename = secure_filename(image.filename)
-        ext = os.path.splitext(filename)[1].lower()
-        if ext in ALLOWED_IMAGE_EXT:
-            dest = os.path.join(IMAGES_DIR, filename)
-            image.save(dest)
-            image_url = f"/static/images/{filename}"
-
-    # Save model if provided
-    if model and model.filename:
-        filename = secure_filename(model.filename)
-        ext = os.path.splitext(filename)[1].lower()
-        if ext in ALLOWED_MODEL_EXT:
-            dest = os.path.join(MODELS_DIR, filename)
-            model.save(dest)
-            model_url = f"/static/models/{filename}"
-
-    # Create artwork entry with all fields
-    new_id = max([a['id'] for a in artworks]) + 1 if artworks else 1
-    new_art = {
-        'id': new_id,
-        'title': title,
-        'artist': artist_name,
-        'price': int(price) if price else 0,
-        'image': image_url or 'https://placehold.co/400x300/cccccc/000000?text=No+Image',
-        'model_url': model_url,
-        'category': category,
-        'likes_count': 0,
-        'description': description,
-        # Additional artisan info (would be stored in separate table in real app)
-        'email': email,
-        'phone': phone,
-        'location': location
-    }
-    artworks.append(new_art)
-
-    return redirect(url_for('art_detail', art_id=new_id))
+# ==================== LIKES/FAVORITES ROUTES ====================
 
 @app.route('/likes')
+@login_required
 def likes():
-    liked_artworks = [art for art in artworks if art['id'] in liked_art_ids]
+    """User's liked artworks"""
+    liked_artworks = [like.artwork for like in current_user.likes.all() if like.artwork.is_active]
     return render_template('likes.html', liked_artworks=liked_artworks)
 
+@app.route('/api/toggle_like/<int:art_id>', methods=['POST'])
+@login_required
+def toggle_like(art_id):
+    """Toggle like status for an artwork"""
+    artwork = Artwork.query.get_or_404(art_id)
+    
+    like = Like.query.filter_by(user_id=current_user.id, artwork_id=art_id).first()
+    
+    if like:
+        # Unlike
+        db.session.delete(like)
+        db.session.commit()
+        return jsonify({'success': True, 'liked': False, 'likes_count': artwork.get_likes_count()})
+    else:
+        # Like
+        like = Like(user_id=current_user.id, artwork_id=art_id)
+        db.session.add(like)
+        db.session.commit()
+        return jsonify({'success': True, 'liked': True, 'likes_count': artwork.get_likes_count()})
+
+# TO BE CONTINUED IN NEXT PART...
+# APPEND THESE ROUTES TO app_new.py TO COMPLETE THE APPLICATION
+
+# ==================== PROFILE ROUTES ====================
+
 @app.route('/profile')
+@login_required
 def profile():
-    """User profile page with uploads, orders, favorites, and settings"""
+    """User profile page"""
+    # Get user's artworks (if seller)
+    user_artworks = []
+    if current_user.role == 'seller':
+        user_artworks = current_user.artworks.filter_by(is_active=True).limit(6).all()
     
-    # Update profile stats
-    user_profile['uploads_count'] = len([a for a in artworks if a.get('artist') == user_profile['username']])
-    user_profile['likes_given'] = len(liked_art_ids)
+    # Get liked artworks
+    liked_artworks = [like.artwork for like in current_user.likes.limit(6).all() if like.artwork.is_active]
     
-    # User's uploaded artworks
-    user_artworks = [a for a in artworks if a.get('artist') == user_profile['username']][:6]
-    
-    # User's liked artworks
-    liked_artworks = [art for art in artworks if art['id'] in liked_art_ids]
-    
-    # Sample order history (in real app, fetch from database)
-    orders = [
-        {
-            'id': 'VC-001-2024',
-            'art': artworks[0],
-            'date': '2024-12-15',
-            'total': 448,
-            'status': 'delivered',
-            'status_text': 'Delivered'
-        },
-        {
-            'id': 'VC-002-2024',
-            'art': artworks[1],
-            'date': '2024-12-20',
-            'total': 648,
-            'status': 'shipping',
-            'status_text': 'In Transit'
-        },
-        {
-            'id': 'VC-003-2024',
-            'art': artworks[2],
-            'date': '2025-01-05',
-            'total': 498,
-            'status': 'processing',
-            'status_text': 'Processing'
-        }
-    ]
+    # Get recent orders
+    orders = current_user.orders.order_by(Order.created_at.desc()).limit(3).all()
     
     return render_template('profile.html', 
-                         profile=user_profile,
+                         profile=current_user,
                          user_artworks=user_artworks,
                          liked_artworks=liked_artworks,
                          orders=orders)
 
-@app.route('/purchase/<int:art_id>')
-def purchase(art_id):
-    """Purchase page for a specific artwork"""
-    art = next((a for a in artworks if a["id"] == art_id), None)
-    if art is None:
-        return render_template('error.html', message="Artwork not found."), 404
-    return render_template('purchase.html', art=art)
-
-@app.route('/purchase/process', methods=['POST'])
-def process_purchase():
-    """Process purchase form submission"""
-    # Get form data
-    art_id = request.form.get('art_id')
-    name = request.form.get('name')
-    email = request.form.get('email')
-    phone = request.form.get('phone')
-    address = request.form.get('address')
-    city = request.form.get('city')
-    state = request.form.get('state')
-    pincode = request.form.get('pincode')
-    payment_method = request.form.get('payment_method')
-    
-    # Get UPI ID if payment method is UPI
-    upi_id = request.form.get('upi_id', '')
-    
-    # In a real application, this would:
-    # 1. Validate all form data
-    # 2. Process payment through payment gateway
-    # 3. Store order in database
-    # 4. Send confirmation email
-    # 5. Notify artisan
-    
-    # For now, we'll just create a success message
-    art = next((a for a in artworks if a["id"] == int(art_id)), None)
-    
-    if art is None:
-        return render_template('error.html', message="Artwork not found."), 404
-    
-    # Create order data (in real app, save to database)
-    order_data = {
-        'order_id': f'VC-{art_id}-{hash(name) % 10000:04d}',
-        'art': art,
-        'customer': {
-            'name': name,
-            'email': email,
-            'phone': phone
-        },
-        'address': f'{address}, {city}, {state} - {pincode}',
-        'payment_method': payment_method,
-        'total': art['price'] + 149
-    }
-    
-    return render_template('order_confirmation.html', order=order_data)
-
-@app.route('/update_profile', methods=['POST'])
+@app.route('/profile/update', methods=['POST'])
+@login_required
 def update_profile():
     """Update user profile information"""
-    global user_profile
+    current_user.bio = request.form.get('bio', current_user.bio)
+    current_user.phone = request.form.get('phone', current_user.phone)
+    current_user.location = request.form.get('location', current_user.location)
     
-    user_profile['username'] = request.form.get('username', user_profile['username'])
-    user_profile['email'] = request.form.get('email', user_profile['email'])
-    user_profile['bio'] = request.form.get('bio', user_profile['bio'])
-    user_profile['phone'] = request.form.get('phone', user_profile.get('phone', ''))
-    user_profile['location'] = request.form.get('location', user_profile.get('location', ''))
-    
+    db.session.commit()
+    flash('Profile updated successfully!', 'success')
     return redirect(url_for('profile'))
 
-@app.route('/update_avatar', methods=['POST'])
+@app.route('/profile/avatar', methods=['POST'])
+@login_required
 def update_avatar():
     """Upload and update user avatar"""
-    from flask import jsonify
-    
     avatar_file = request.files.get('avatar')
     
     if avatar_file and avatar_file.filename:
         filename = secure_filename(avatar_file.filename)
         ext = os.path.splitext(filename)[1].lower()
+        
         if ext in ALLOWED_IMAGE_EXT:
-            # Create avatars directory if it doesn't exist
-            avatars_dir = os.path.join(STATIC_DIR, 'avatars')
-            os.makedirs(avatars_dir, exist_ok=True)
-            
-            # Save with unique filename
-            avatar_filename = f"avatar_{user_profile['username']}{ext}"
-            dest = os.path.join(avatars_dir, avatar_filename)
+            # Create unique filename
+            avatar_filename = f"avatar_{current_user.id}_{secrets.token_hex(8)}{ext}"
+            dest = os.path.join(AVATARS_DIR, avatar_filename)
             avatar_file.save(dest)
             
             # Update profile
-            user_profile['avatar'] = f"/static/avatars/{avatar_filename}"
+            current_user.avatar = f"/static/avatars/{avatar_filename}"
+            db.session.commit()
             
-            return jsonify({'success': True, 'avatar_url': user_profile['avatar']})
+            return jsonify({'success': True, 'avatar_url': current_user.avatar})
     
-    return jsonify({'success': False, 'error': 'Invalid file'})
+    return jsonify({'success': False, 'error': 'Invalid file'}), 400
 
-@app.route('/update_settings', methods=['POST'])
-def update_settings():
-    """Update user settings/preferences"""
-    # In a real app, save these to database
-    # For now, just redirect back
-    return redirect(url_for('profile'))
+# ==================== SELLER/UPLOAD ROUTES ====================
 
-@app.route('/change_password', methods=['POST'])
-def change_password():
-    """Change user password"""
-    current_password = request.form.get('current_password')
-    new_password = request.form.get('new_password')
-    confirm_password = request.form.get('confirm_password')
+@app.route('/seller/analytics')
+@login_required
+def seller_analytics():
+    """Seller Analytics Dashboard"""
+    if current_user.role != 'seller':
+        flash('Access denied! Seller account required.', 'error')
+        return redirect(url_for('home'))
     
-    # In a real app, validate current password and update
-    # For demo, just redirect back
-    return redirect(url_for('profile'))
-
-@app.route('/api/toggle_like/<int:art_id>', methods=['POST'])
-def toggle_like(art_id):
-    """Toggle like status for an artwork"""
-    from flask import jsonify
+    # Get seller's artworks
+    artworks = current_user.artworks.filter_by(is_active=True).all()
     
-    if art_id in liked_art_ids:
-        liked_art_ids.remove(art_id)
-        # Also decrement the likes_count for that artwork
-        for art in artworks:
-            if art['id'] == art_id:
-                art['likes_count'] = max(0, art['likes_count'] - 1)
-                break
-        return jsonify({'success': True, 'liked': False})
-    else:
-        liked_art_ids.append(art_id)
-        # Increment the likes_count for that artwork
-        for art in artworks:
-            if art['id'] == art_id:
-                art['likes_count'] += 1
-                break
-        return jsonify({'success': True, 'liked': True})
+    # Calculate metrics
+    total_views = sum(art.views for art in artworks)
+    total_favorites = sum(art.get_likes_count() for art in artworks)
+    total_ar_tries = sum(art.get_ar_tries_count() for art in artworks)
+    
+    # Calculate revenue from orders
+    from sqlalchemy import func
+    revenue_query = db.session.query(func.sum(OrderItem.subtotal)).join(
+        Artwork
+    ).filter(
+        Artwork.user_id == current_user.id
+    ).scalar()
+    total_revenue = revenue_query or 0
+    
+    return render_template('seller_analytics.html', 
+                         artworks=artworks,
+                         total_views=total_views,
+                         total_favorites=total_favorites,
+                         total_ar_tries=total_ar_tries,
+                         total_revenue=total_revenue)
+
+@app.route('/upload', methods=['GET', 'POST'])
+@login_required
+def upload():
+    """Upload new artwork"""
+    if current_user.role != 'seller':
+        flash('Upload feature is only available for sellers!', 'error')
+        return redirect(url_for('home'))
+    
+    if request.method == 'POST':
+        # Get form data
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        category = request.form.get('category', 'Other')
+        price = request.form.get('price', 0)
+        artist_name = request.form.get('artist_name', current_user.username)
+        state = request.form.get('state', '')
+        making_process = request.form.get('making_process', '')
+        stock_quantity = request.form.get('stock_quantity', 10)
+        
+        # Validate
+        if not title or not price:
+            flash('Title and price are required!', 'error')
+            return render_template('upload.html')
+        
+        try:
+            price = float(price)
+            stock_quantity = int(stock_quantity)
+        except ValueError:
+            flash('Invalid price or stock quantity!', 'error')
+            return render_template('upload.html')
+        
+        # Get uploaded files
+        image = request.files.get('image')
+        model = request.files.get('model')
+        
+        image_url = None
+        model_url = None
+        
+        # Save image
+        if image and image.filename:
+            filename = secure_filename(image.filename)
+            ext = os.path.splitext(filename)[1].lower()
+            if ext in ALLOWED_IMAGE_EXT:
+                unique_filename = f"{secrets.token_hex(8)}_{filename}"
+                dest = os.path.join(IMAGES_DIR, unique_filename)
+                image.save(dest)
+                image_url = f"/static/images/{unique_filename}"
+        
+        # Save model
+        if model and model.filename:
+            filename = secure_filename(model.filename)
+            ext = os.path.splitext(filename)[1].lower()
+            if ext in ALLOWED_MODEL_EXT:
+                unique_filename = f"{secrets.token_hex(8)}_{filename}"
+                dest = os.path.join(MODELS_DIR, unique_filename)
+                model.save(dest)
+                model_url = f"/static/models/{unique_filename}"
+        
+        # Create artwork
+        artwork = Artwork(
+            title=title,
+            description=description,
+            price=price,
+            category=category,
+            image=image_url or 'https://placehold.co/400x300/cccccc/000000?text=No+Image',
+            model_url=model_url,
+            user_id=current_user.id,
+            artist_name=artist_name,
+            state=state,
+            making_process=making_process,
+            stock_quantity=stock_quantity,
+            rating=0.0,
+            views=0
+        )
+        
+        db.session.add(artwork)
+        db.session.commit()
+        
+        flash(f'Artwork "{title}" uploaded successfully!', 'success')
+        return redirect(url_for('art_detail', art_id=artwork.id))
+    
+    return render_template('upload.html')
+
+@app.route('/edit/<int:art_id>', methods=['GET', 'POST'])
+@login_required
+def edit_artwork(art_id):
+    """Edit artwork"""
+    artwork = Artwork.query.get_or_404(art_id)
+    
+    # Verify ownership
+    if artwork.user_id != current_user.id:
+        flash('You can only edit your own artworks!', 'error')
+        return redirect(url_for('home'))
+    
+    if request.method == 'POST':
+        artwork.title = request.form.get('title', artwork.title)
+        artwork.description = request.form.get('description', artwork.description)
+        artwork.price = float(request.form.get('price', artwork.price))
+        artwork.category = request.form.get('category', artwork.category)
+        artwork.stock_quantity = int(request.form.get('stock_quantity', artwork.stock_quantity))
+        
+        db.session.commit()
+        flash('Artwork updated successfully!', 'success')
+        return redirect(url_for('art_detail', art_id=art_id))
+    
+    return render_template('edit_artwork.html', artwork=artwork)
 
 @app.route('/api/delete_art/<int:art_id>', methods=['DELETE'])
+@login_required
 def delete_art(art_id):
-    """Delete an artwork"""
-    from flask import jsonify
+    """Delete artwork"""
+    artwork = Artwork.query.get_or_404(art_id)
     
-    # Find and remove the artwork
-    global artworks
-    artworks = [art for art in artworks if art['id'] != art_id]
+    # Verify ownership
+    if artwork.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
     
-    # Remove from liked_art_ids if present
-    if art_id in liked_art_ids:
-        liked_art_ids.remove(art_id)
+    # Soft delete (set inactive)
+    artwork.is_active = False
+    db.session.commit()
     
     return jsonify({'success': True})
 
-@app.route('/api/delete_account', methods=['DELETE'])
-def delete_account():
-    """Delete user account"""
-    from flask import jsonify
+# ==================== EVENTS ROUTES ====================
+
+@app.route('/events')
+def events():
+    """Local Events & Workshops Calendar"""
+    events_list = Event.query.filter_by(is_active=True).order_by(Event.event_date).all()
     
-    # In a real app, this would delete all user data
-    # For demo, just return success
-    return jsonify({'success': True})
+    # Mark RSVP status for authenticated users
+    events_with_status = []
+    for event in events_list:
+        event_dict = {
+            'id': event.id,
+            'title': event.title,
+            'type': event.event_type,
+            'date': event.event_date.strftime('%Y-%m-%d'),
+            'time': event.event_time,
+            'location': event.location,
+            'address': event.address,
+            'description': event.description,
+            'tags': event.get_tags_list(),
+            'rsvped': False
+        }
+        
+        if current_user.is_authenticated:
+            rsvp = EventRSVP.query.filter_by(
+                user_id=current_user.id,
+                event_id=event.id
+            ).first()
+            event_dict['rsvped'] = rsvp is not None
+        
+        events_with_status.append(event_dict)
+    
+    return render_template('events.html', events=events_with_status)
+
+@app.route('/api/events/rsvp/<int:event_id>', methods=['POST'])
+@login_required
+def api_rsvp_event(event_id):
+    """RSVP to an event"""
+    event = Event.query.get_or_404(event_id)
+    
+    rsvp = EventRSVP.query.filter_by(
+        user_id=current_user.id,
+        event_id=event_id
+    ).first()
+    
+    if rsvp:
+        # Cancel RSVP
+        db.session.delete(rsvp)
+        db.session.commit()
+        return jsonify({'success': True, 'rsvped': False, 'message': 'RSVP cancelled'})
+    else:
+        # Create RSVP
+        rsvp = EventRSVP(user_id=current_user.id, event_id=event_id)
+        db.session.add(rsvp)
+        db.session.commit()
+        return jsonify({'success': True, 'rsvped': True, 'message': 'RSVP confirmed'})
+
+# ==================== ADDITIONAL FEATURES ====================
 
 @app.route('/wall-stylist')
 def wall_stylist():
-    """AR Wall Stylist - Cycle through multiple decor options"""
+    """AR Wall Stylist"""
     return render_template('wall_stylist.html')
 
 @app.route('/crafts-map')
 def crafts_map():
-    """Interactive Crafts Map of India with state-wise AR portal"""
+    """Interactive Crafts Map of India"""
     return render_template('crafts_map.html')
 
-# ----------------- EVENTS ROUTES -----------------
+# ==================== ERROR HANDLERS ====================
 
-@app.route('/events')
-def events():
-    """Local Events & Workshops Calendar and list view"""
-    # Mark RSVP status per event for current user
-    user_rsvps = set(user_profile.get('rsvps', []))
-    events_with_status = []
-    for e in EVENTS:
-        e_copy = dict(e)
-        e_copy['rsvped'] = e['id'] in user_rsvps
-        events_with_status.append(e_copy)
-    return render_template('events.html', events=events_with_status)
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('error.html', 
+                         message='Page not found',
+                         error_code=404), 404
 
-@app.route('/api/events/rsvp/<int:event_id>', methods=['POST'])
-def api_rsvp_event(event_id):
-    from flask import jsonify
-    # Validate event exists
-    event = next((e for e in EVENTS if e['id'] == event_id), None)
-    if not event:
-        return jsonify({"success": False, "error": "Event not found"}), 404
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('error.html',
+                         message='Internal server error',
+                         error_code=500), 500
 
-    rsvps = set(user_profile.get('rsvps', []))
-    if event_id in rsvps:
-        rsvps.remove(event_id)
-        user_profile['rsvps'] = list(rsvps)
-        return jsonify({"success": True, "rsvped": False, "message": "RSVP cancelled"})
-    else:
-        rsvps.add(event_id)
-        user_profile['rsvps'] = list(rsvps)
-        return jsonify({"success": True, "rsvped": True, "message": "RSVP confirmed"})
+@app.errorhandler(403)
+def forbidden_error(error):
+    return render_template('error.html',
+                         message='Access forbidden',
+                         error_code=403), 403
 
-@app.route('/edit/<int:art_id>')
-def edit_artwork(art_id):
-    """Edit artwork page"""
-    art = next((a for a in artworks if a['id'] == art_id), None)
-    if art is None:
-        return render_template('error.html', message="Artwork not found."), 404
-    
-    # For now, redirect to upload page with artwork data
-    # In a full implementation, create a dedicated edit page
-    return redirect(url_for('upload'))
-
-@app.route('/order/<order_id>')
-def order_details(order_id):
-    """View order details"""
-    # In a real app, fetch order from database
-    return render_template('error.html', message="Order details page coming soon!"), 404
-
-@app.route('/reorder/<order_id>')
-def reorder(order_id):
-    """Reorder from a previous order"""
-    # In a real app, fetch order and redirect to purchase
-    return redirect(url_for('home'))
+# ==================== MAIN ====================
 
 if __name__ == '__main__':
-    # Set debug=True for easier development - it gives more detailed error messages
-    # host='0.0.0.0' allows access from other devices on the same network (required for mobile AR testing)
-    # For production, set debug=False and use a proper WSGI server like gunicorn
-    
     import socket
     hostname = socket.gethostname()
     local_ip = socket.gethostbyname(hostname)
-    
-    print("\n" + "="*60)
-    print("🎨 VisionCraft AR Application Starting...")
-    print("="*60)
-    print(f"\n📍 Local Access:")
-    print(f"   http://localhost:5000")
-    print(f"   http://127.0.0.1:5000")
-    print(f"\n📱 Mobile Access (same WiFi network):")
-    print(f"   http://{local_ip}:5000")
-    print(f"\n💡 For AR Testing:")
-    print(f"   - Open the mobile URL on your phone/tablet")
-    print(f"   - Make sure your mobile is on the same WiFi")
-    print(f"   - Grant camera permissions when prompted")
-    print(f"\n⚠️  Note: AR features require HTTPS in production")
-    print(f"   Use ngrok or similar for HTTPS testing")
-    print("\n" + "="*60 + "\n")
-    
     app.run(debug=True, host='0.0.0.0', port=5000)

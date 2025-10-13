@@ -18,9 +18,9 @@
         Your browser does not support the video tag.
       </video>
       <div class="story-info">
-        <h3>{{ art.get('making_process', 'Traditional handcrafted with care') }}</h3>
-        <p><i class="fas fa-map-marker-alt"></i> <strong>Origin:</strong> {{ art.get('state', 'India') }}</p>
-        <p><i class="fas fa-user"></i> <strong>Artisan:</strong> {{ art.artist }}</p>
+        <h3>{{ art.making_process or 'Traditional handcrafted with care' }}</h3>
+        <p><i class="fas fa-map-marker-alt"></i> <strong>Origin:</strong> {{ art.state or 'India' }}</p>
+        <p><i class="fas fa-user"></i> <strong>Artisan:</strong> {{ art.artist_name }}</p>
       </div>
     </div>
   </div>
@@ -55,8 +55,12 @@
       </button>
 
       <div class="interaction-buttons">
-        <a href="{{ url_for('purchase', art_id=art.id) }}" class="btn primary-action"><i class="fas fa-shopping-bag"></i> Purchase Now</a>
-        <button class="btn secondary-action"><i class="fas fa-share-alt"></i> Share</button>
+        {% if current_user.is_authenticated %}
+          <button onclick="addToCart({{ art.id }})" class="btn primary-action"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn primary-action"><i class="fas fa-shopping-cart"></i> Login to Purchase</a>
+        {% endif %}
+        <button class="btn secondary-action" onclick="shareArtwork()"><i class="fas fa-share-alt"></i> Share</button>
       </div>
     </div>
   </div>
@@ -226,19 +230,38 @@
       }
     });
 
-    // Share button functionality
-    document.querySelector('.secondary-action').addEventListener('click', () => {
-        if (navigator.share) {
-            navigator.share({
-                title: '{{ art.title }}',
-                text: 'Check out {{ art.title }} by {{ art.artist }} on VisionCraft!',
-                url: window.location.href
-            }).catch(err => console.log('Error sharing:', err));
+    // Add to cart function
+    async function addToCart(artId) {
+      try {
+        const response = await fetch(`/api/cart/add/${artId}`, { method: 'POST' });
+        const data = await response.json();
+        if (data.success) {
+          showToast(data.message, 'success');
+          // Update cart count if element exists
+          const cartCount = document.querySelector('.cart-count');
+          if (cartCount) cartCount.textContent = data.cart_count;
         } else {
-            // Fallback: copy link to clipboard
-            navigator.clipboard.writeText(window.location.href);
-            showToast('Link copied to clipboard!', 'success');
+          showToast('Failed to add to cart', 'error');
         }
-    });
+      } catch (error) {
+        console.error('Error:', error);
+        showToast('Error adding to cart', 'error');
+      }
+    }
+
+    // Share artwork function
+    function shareArtwork() {
+      if (navigator.share) {
+        navigator.share({
+          title: '{{ art.title }}',
+          text: 'Check out {{ art.title }} by {{ art.artist_name }} on VisionCraft!',
+          url: window.location.href
+        }).catch(err => console.log('Error sharing:', err));
+      } else {
+        // Fallback: copy link to clipboard
+        navigator.clipboard.writeText(window.location.href);
+        showToast('Link copied to clipboard!', 'success');
+      }
+    }
   </script>
 {% endblock content %}

@@ -1,0 +1,169 @@
+/* ═══════════════════════════════════════════════════════════════
+   TOAST NOTIFICATION SYSTEM
+   ═══════════════════════════════════════════════════════════════ */
+
+.toast-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 15px 25px rgba(0,0,0,0.19), 0 5px 10px rgba(0,0,0,0.15);
+  color: #2c3e50;
+  font-weight: 500;
+  transform: translateX(400px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  border-left: 4px solid;
+}
+
+.toast.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.toast i {
+  font-size: 1.3rem;
+}
+
+.toast-success {
+  border-left-color: #2ecc71;
+}
+
+.toast-success i {
+  color: #2ecc71;
+}
+
+.toast-error {
+  border-left-color: #e74c3c;
+}
+
+.toast-error i {
+  color: #e74c3c;
+}
+
+.toast-warning {
+  border-left-color: #f39c12;
+}
+
+.toast-warning i {
+  color: #f39c12;
+}
+
+.toast-info {
+  border-left-color: #3498db;
+}
+
+.toast-info i {
+  color: #3498db;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 0.95rem;
+}
+
+.toast-close {
+  background: transparent;
+  border: none;
+  color: #95a5a6;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.toast-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #7f8c8d;
+}
+
+@media (max-width: 768px) {
+  .toast-container {
+    top: 70px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+  
+  .toast {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Loading Skeleton */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 25%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.1) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-card {
+  height: 350px;
+  border-radius: 20px;
+}
+
+.skeleton-text {
+  height: 16px;
+  margin: 8px 0;
+}
+
+.skeleton-title {
+  height: 24px;
+  width: 70%;
+  margin: 12px 0;
+}
+
+/* Enhanced Card Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.art-card {
+  animation: fadeInUp 0.6s ease backwards;
+}
+
+.art-card:nth-child(1) { animation-delay: 0.05s; }
+.art-card:nth-child(2) { animation-delay: 0.1s; }
+.art-card:nth-child(3) { animation-delay: 0.15s; }
+.art-card:nth-child(4) { animation-delay: 0.2s; }
+.art-card:nth-child(5) { animation-delay: 0.25s; }
+.art-card:nth-child(6) { animation-delay: 0.3s; }
+.art-card:nth-child(7) { animation-delay: 0.35s; }
+.art-card:nth-child(8) { animation-delay: 0.4s; }
+.art-card:nth-child(9) { animation-delay: 0.45s; }
+.art-card:nth-child(10) { animation-delay: 0.5s; }
+.art-card:nth-child(11) { animation-delay: 0.55s; }
+.art-card:nth-child(12) { animation-delay: 0.6s; }

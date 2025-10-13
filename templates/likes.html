@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Likes | Art Discovery Platform{% endblock title %}
+
+{% block content %}
+  <section class="feature-page">
+    <h2><i class="fas fa-heart"></i> Your Liked Artworks</h2>
+    <p>A collection of the art you've loved. Keep your favorites close!</p>
+
+    <div class="art-grid likes-grid">
+      {% if liked_artworks %}
+        {% for art in liked_artworks %}
+          <div class="liked-art-item">
+            <a href="{{ url_for('art_detail', art_id=art.id) }}">
+              <img src="{{ art.image }}" alt="{{ art.title }}">
+              <div class="overlay-info">
+                <h4>{{ art.title }}</h4>
+                <p>{{ art.artist }}</p>
+              </div>
+            </a>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="empty-state">You haven't liked any art yet. Go explore!</p>
+      {% endif %}
+    </div>
+
+  </section>
+{% endblock content %}

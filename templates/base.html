@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Discover, share, and view art in augmented reality.">
+  <title>{% block title %}Art Discovery Platform{% endblock title %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='toast.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="{{ url_for('static', filename='toast.js') }}"></script>
+</head>
+<body>
+  <header class="top-header">
+    <div class="brand">
+      <div class="logo-icon"><i class="fas fa-palette"></i></div>
+      <div>
+        <h1 class="brand-title" data-lang-key="app_title">Art Discovery</h1>
+        <p class="brand-subtitle" data-lang-key="app_subtitle">Explore your next inspiration</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+        <i class="fas fa-moon" id="themeIcon"></i>
+      </button>
+      <button id="langToggle" class="lang-toggle" aria-label="Change language">
+        <span id="langText">EN</span>
+      </button>
+      <a href="{{ url_for('search') }}" class="btn scan-btn" aria-label="Search Art">
+        <i class="fas fa-search"></i> <span data-lang-key="search">Search</span>
+      </a>
+    </div>
+  </header>
+
+  <main>
+    {% block content %}{% endblock content %}
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="{{ url_for('home') }}" class="nav-item {% if request.path == url_for('home') %}active{% endif %}">
+      <i class="fas fa-home"></i>
+      <span data-lang-key="home">Home</span>
+    </a>
+    <a href="{{ url_for('search') }}" class="nav-item {% if request.path == url_for('search') %}active{% endif %}">
+      <i class="fas fa-search"></i>
+      <span data-lang-key="search">Search</span>
+    </a>
+    {% if session.get('role') == 'seller' %}
+      <a href="{{ url_for('seller_analytics') }}" class="nav-item {% if request.path == url_for('seller_analytics') %}active{% endif %}">
+        <i class="fas fa-chart-line"></i>
+        <span>Seller</span>
+      </a>
+      <a href="{{ url_for('upload') }}" class="nav-item upload-cta {% if request.path == url_for('upload') %}active{% endif %}">
+        <i class="fas fa-plus"></i>
+        <span data-lang-key="upload">Upload</span>
+      </a>
+    {% endif %}
+    <a href="{{ url_for('likes') }}" class="nav-item {% if request.path == url_for('likes') %}active{% endif %}">
+      <i class="fas fa-heart"></i>
+      <span data-lang-key="likes">Likes</span>
+    </a>
+    <a href="{{ url_for('events') }}" class="nav-item {% if request.path == url_for('events') %}active{% endif %}">
+      <i class="fas fa-calendar"></i>
+      <span>Events</span>
+    </a>
+    <a href="{{ url_for('profile') }}" class="nav-item {% if request.path == url_for('profile') %}active{% endif %}">
+      <i class="fas fa-user-circle"></i>
+      <span data-lang-key="profile">Profile</span>
+    </a>
+  </nav>
+
+  <footer>
+    <p>&copy; 2025 <span data-lang-key="footer_text">Art Discovery Platform. Explore, Connect, Create.</span></p>
+  </footer>
+
+  <script>
+    // ========================================
+    // THEME TOGGLE (Dark/Light Mode)
+    // ========================================
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const htmlElement = document.documentElement;
+
+    // Load saved theme from localStorage
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    htmlElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+
+    function updateThemeIcon(theme) {
+      if (theme === 'dark') {
+        themeIcon.className = 'fas fa-sun';
+      } else {
+        themeIcon.className = 'fas fa-moon';
+      }
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = htmlElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      
+      htmlElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon(newTheme);
+      
+      // Add animation
+      themeToggle.style.transform = 'rotate(360deg)';
+      setTimeout(() => {
+        themeToggle.style.transform = 'rotate(0deg)';
+      }, 300);
+    });
+
+    // ========================================
+    // LANGUAGE TOGGLE (English/Hindi)
+    // ========================================
+    const langToggle = document.getElementById('langToggle');
+    const langText = document.getElementById('langText');
+
+    const translations = {
+      en: {
+        app_title: 'Art Discovery',
+        app_subtitle: 'Explore your next inspiration',
+        search: 'Search',
+        home: 'Home',
+        upload: 'Upload',
+        likes: 'Likes',
+        profile: 'Profile',
+        footer_text: 'Art Discovery Platform. Explore, Connect, Create.',
+        featured_artworks: 'Featured Artworks',
+        featured_subtitle: 'Discover the latest and greatest creations from our global community.',
+        view_in_ar: 'View in AR',
+        by: 'by'
+      },
+      hi: {
+        app_title: 'कला खोज',
+        app_subtitle: 'अपनी अगली प्रेरणा खोजें',
+        search: 'खोजें',
+        home: 'घर',
+        upload: 'अपलोड',
+        likes: 'पसंद',
+        profile: 'प्रोफाइल',
+        footer_text: 'कला खोज मंच। खोजें, जुड़ें, बनाएं।',
+        featured_artworks: 'फीचर्ड कलाकृतियां',
+        featured_subtitle: 'हमारे वैश्विक समुदाय की नवीनतम और श्रेष्ठ रचनाओं को खोजें।',
+        view_in_ar: 'AR में देखें',
+        by: 'द्वारा'
+      }
+    };
+
+    // Load saved language from localStorage
+    let currentLang = localStorage.getItem('language') || 'en';
+    langText.textContent = currentLang.toUpperCase();
+    applyTranslations(currentLang);
+
+    function applyTranslations(lang) {
+      const elements = document.querySelectorAll('[data-lang-key]');
+      elements.forEach(element => {
+        const key = element.getAttribute('data-lang-key');
+        if (translations[lang][key]) {
+          // Handle different element types
+          if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+            element.placeholder = translations[lang][key];
+          } else {
+            element.textContent = translations[lang][key];
+          }
+        }
+      });
+    }
+
+    langToggle.addEventListener('click', () => {
+      currentLang = currentLang === 'en' ? 'hi' : 'en';
+      langText.textContent = currentLang.toUpperCase();
+      localStorage.setItem('language', currentLang);
+      applyTranslations(currentLang);
+      
+      // Add animation
+      langToggle.style.transform = 'scale(1.1)';
+      setTimeout(() => {
+        langToggle.style.transform = 'scale(1)';
+      }, 200);
+    });
+  </script>
+
+</body>
+</html>

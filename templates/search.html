@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Search | Art Discovery Platform{% endblock title %}
+
+{% block content %}
+  <section class="feature-page">
+    <h2><i class="fas fa-search"></i> Search for Art</h2>
+    <p>Find your next inspiration by searching for titles, artists, or categories.</p>
+    
+    <form class="search-form-mock" method="get" action="{{ url_for('search') }}">
+      <input type="text" name="q" placeholder="e.g., 'Pottery', 'Priya Sharma'..." value="{{ query or '' }}">
+      <button type="submit" class="btn primary-action">Search</button>
+    </form>
+    
+    {% if query %}
+      <div class="search-results-container">
+        <h3 class="results-heading">Results for "{{ query }}"</h3>
+        {% if search_results %}
+          <div class="art-grid">
+            {% for art in search_results %}
+              <article class="art-card" data-art-id="{{ art.id }}">
+                <div class="art-image-wrapper">
+                  <a href="{{ url_for('art_detail', art_id=art.id) }}">
+                    <img src="{{ art.image }}" alt="{{ art.title }}">
+                  </a>
+                </div>
+                <div class="art-content">
+                  <h3 class="art-title">
+                    <a href="{{ url_for('art_detail', art_id=art.id) }}">{{ art.title }}</a>
+                  </h3>
+                  <p class="art-artist">by {{ art.artist }}</p>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="empty-state">No artworks found matching your search.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+
+  <style>
+    .search-results-container {
+      margin-top: 40px;
+      text-align: left;
+    }
+    .results-heading {
+      color: var(--color-light-text);
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+  </style>
+{% endblock content %}

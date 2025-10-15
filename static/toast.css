@@ -21,7 +21,7 @@
   border-radius: 12px;
   background: white;
   box-shadow: 0 15px 25px rgba(0,0,0,0.19), 0 5px 10px rgba(0,0,0,0.15);
-  color: #2c3e50;
+  color: #2c3e50 !important;
   font-weight: 500;
   transform: translateX(400px);
   opacity: 0;
@@ -74,6 +74,7 @@
 .toast-message {
   flex: 1;
   font-size: 0.95rem;
+  color: #2c3e50 !important;
 }
 
 .toast-close {
@@ -240,4 +241,27 @@ main {
   );
   background-size: 1000px 100%;
   animation: shimmer 2s infinite linear;
+}
+
+/* Dark Mode Support for Toasts */
+@media (prefers-color-scheme: dark) {
+  .toast {
+    background: rgba(15, 23, 42, 0.95) !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 15px 25px rgba(0,0,0,0.4), 0 5px 10px rgba(0,0,0,0.3);
+  }
+  
+  .toast-message {
+    color: #f1f5f9 !important;
+  }
+}
+
+[data-theme="dark"] .toast {
+  background: rgba(15, 23, 42, 0.95) !important;
+  color: #f1f5f9 !important;
+  box-shadow: 0 15px 25px rgba(0,0,0,0.4), 0 5px 10px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .toast-message {
+  color: #f1f5f9 !important;
 }

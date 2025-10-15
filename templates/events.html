@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Local Events & Workshops | VisionCraft{% endblock title %}
+
+{% block content %}
+  <div class="events-container">
+    <div class="events-header">
+      <h1><i class="fas fa-calendar-alt"></i> Local Events & Workshops</h1>
+      <p>Discover nearby craft fairs, workshops, and community classes. RSVP to get reminders.</p>
+    </div>
+
+    <div class="events-grid">
+      <!-- Calendar Panel (simple month grid) -->
+      <section class="calendar-card">
+        <div class="calendar-header">
+          <button class="cal-nav" id="prevMonth" aria-label="Previous month"><i class="fas fa-chevron-left"></i></button>
+          <h3 id="calTitle">October 2025</h3>
+          <button class="cal-nav" id="nextMonth" aria-label="Next month"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="calendar-legend">
+          <span class="dot fair"></span> Fair
+          <span class="dot workshop"></span> Workshop
+          <span class="dot class"></span> Class
+          <span class="dot exhibition"></span> Exhibition
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </section>
+
+      <!-- List Panel -->
+      <section class="list-card">
+        <h3><i class="fas fa-list"></i> Upcoming Events</h3>
+        <div id="eventsList" class="events-list">
+          {% for e in events %}
+          <div class="event-row" data-event-id="{{ e.id }}">
+            <div class="event-main">
+              <div class="event-type type-{{ e.type | lower }}">{{ e.type }}</div>
+              <div>
+                <div class="event-title">{{ e.title }}</div>
+                <div class="event-meta">
+                  <i class="far fa-clock"></i> {{ e.date }} • {{ e.time }}
+                  &nbsp;&nbsp; <i class="fas fa-map-marker-alt"></i> {{ e.location }}
+                </div>
+                <div class="event-desc">{{ e.description }}</div>
+                {% if e.tags %}
+                <div class="event-tags">
+                  {% for t in e.tags %}
+                    <span class="tag">#{{ t }}</span>
+                  {% endfor %}
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="event-actions">
+              <button class="btn-rsvp {{ 'rsvped' if e.rsvped else '' }}" onclick="toggleRSVP({{ e.id }}, this)">
+                <i class="fas {{ 'fa-check' if e.rsvped else 'fa-plus' }}"></i>
+                <span>{{ 'RSVPed' if e.rsvped else 'RSVP' }}</span>
+              </button>
+              <a class="btn-secondary" target="_blank" rel="noopener" href="https://www.google.com/maps/search/{{ e.address | urlencode }}">
+                <i class="fas fa-map"></i> Map
+              </a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <style>
+    .events-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    .events-header { text-align: center; margin-bottom: 24px; }
+    .events-header h1 { color: var(--card-text); font-size: 2rem; margin: 0 0 6px; }
+    .events-header p { color: var(--card-text); opacity: 0.85; }
+
+    .events-grid { display: grid; grid-template-columns: 420px 1fr; gap: 20px; }
+    @media (max-width: 1024px) { .events-grid { grid-template-columns: 1fr; } }
+
+    .calendar-card, .list-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--elevation-2);
+    }
+
+    .calendar-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px; }
+    .cal-nav { background: transparent; border: 1px solid var(--glass-border); color: var(--card-text); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+    .calendar-legend { display:flex; gap: 10px; align-items:center; color: var(--card-text); opacity: .9; margin-bottom: 10px; flex-wrap: wrap; }
+    .dot { display:inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+    .dot.fair { background:#3498db; } .dot.workshop { background:#9b59b6; } .dot.class { background:#f39c12; } .dot.exhibition { background:#2ecc71; }
+
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+    .cal-cell { height: 80px; border: 1px solid var(--glass-border); border-radius: 8px; padding: 6px; color: var(--card-text); position: relative; background: var(--glass-bg); overflow: hidden; }
+    .cal-day { font-size: .8rem; opacity: .7; }
+    .cal-event { position: absolute; bottom: 6px; left: 6px; right: 6px; font-size: .7rem; padding: 4px 6px; border-radius: 6px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cal-event.fair { background:#3498db; } .cal-event.workshop { background:#9b59b6; } .cal-event.class { background:#f39c12; } .cal-event.exhibition { background:#2ecc71; }
+
+    .list-card h3 { color: var(--card-text); margin-bottom: 10px; }
+    .events-list { display:flex; flex-direction: column; gap: 12px; }
+    .event-row { display:flex; justify-content: space-between; gap: 12px; border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px; background: var(--glass-bg); }
+    .event-main { display:flex; gap: 12px; }
+    .event-title { font-weight: 800; color: var(--card-text); }
+    .event-meta { font-size: .9rem; color: var(--card-text); opacity: .85; margin-top: 2px; }
+    .event-desc { color: var(--card-text); opacity: .9; margin-top: 6px; }
+    .event-tags { margin-top: 8px; display:flex; gap:6px; flex-wrap: wrap; }
+    .tag { background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--card-text); border-radius: 12px; padding: 3px 8px; font-size: .75rem; }
+
+    .event-actions { display:flex; gap: 10px; align-items: center; }
+    .btn-rsvp { background: var(--color-primary); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; display:flex; gap:6px; align-items:center; font-weight: 700; }
+    .btn-rsvp.rsvped { background: #2ecc71; }
+    .btn-secondary { text-decoration: none; background: transparent; border: 1px solid var(--glass-border); color: var(--card-text); padding: 8px 12px; border-radius: 8px; font-weight: 600; }
+    .event-type { min-width: 80px; text-align:center; color:#fff; padding: 6px 8px; border-radius: 8px; font-weight: 700; height:max-content; }
+    .type-fair { background:#3498db; } .type-workshop { background:#9b59b6; } .type-class { background:#f39c12; } .type-exhibition { background:#2ecc71; }
+  </style>
+
+  <script>
+    // Mini month grid - renders current month and highlights days with events
+    document.addEventListener('DOMContentLoaded', () => {
+      const events = {{ events | tojson }};
+      const title = document.getElementById('calTitle');
+      const grid = document.getElementById('calendarGrid');
+      const prevBtn = document.getElementById('prevMonth');
+      const nextBtn = document.getElementById('nextMonth');
+
+      let current = new Date(events[0]?.date || new Date());
+      current.setDate(1);
+
+      function renderMonth() {
+        const year = current.getFullYear();
+        const month = current.getMonth();
+        const monthName = current.toLocaleString('default', { month: 'long' });
+        title.textContent = `${monthName} ${year}`;
+
+        grid.innerHTML = '';
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // Prefix blanks
+        for (let i = 0; i < firstDay; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'cal-cell';
+          grid.appendChild(cell);
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const cell = document.createElement('div');
+          cell.className = 'cal-cell';
+          const day = document.createElement('div');
+          day.className = 'cal-day';
+          day.textContent = d;
+          cell.appendChild(day);
+
+          const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const todaysEvents = events.filter(e => e.date === dateStr);
+          if (todaysEvents.length) {
+            todaysEvents.slice(0,2).forEach(e => {
+              const tag = document.createElement('div');
+              tag.className = `cal-event ${e.type.toLowerCase()}`;
+              tag.textContent = e.title;
+              cell.appendChild(tag);
+            });
+          }
+          grid.appendChild(cell);
+        }
+      }
+
+      prevBtn.addEventListener('click', () => { current.setMonth(current.getMonth() - 1); renderMonth(); });
+      nextBtn.addEventListener('click', () => { current.setMonth(current.getMonth() + 1); renderMonth(); });
+      renderMonth();
+    });
+
+    async function toggleRSVP(eventId, btn) {
+      try {
+        const res = await fetch(`/api/events/rsvp/${eventId}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          const icon = btn.querySelector('i');
+          const label = btn.querySelector('span');
+          if (data.rsvped) {
+            btn.classList.add('rsvped');
+            icon.classList.remove('fa-plus');
+            icon.classList.add('fa-check');
+            label.textContent = 'RSVPed';
+            showToast('RSVP confirmed', 'success');
+          } else {
+            btn.classList.remove('rsvped');
+            icon.classList.remove('fa-check');
+            icon.classList.add('fa-plus');
+            label.textContent = 'RSVP';
+            showToast('RSVP cancelled', 'info');
+          }
+        } else {
+          showToast(data.error || 'Unable to RSVP', 'error');
+        }
+      } catch (e) {
+        showToast('Network error while RSVPing', 'error');
+      }
+    }
+  </script>
+{% endblock content %}

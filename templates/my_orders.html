@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders | VisionCraft{% endblock title %}
+
+{% block content %}
+  <div class="orders-page">
+    <div class="page-header">
+      <a href="{{ url_for('profile') }}" class="back-link">
+        <i class="fas fa-chevron-left"></i> Back to Profile
+      </a>
+      <h1><i class="fas fa-shopping-bag"></i> My Orders</h1>
+      <p class="subtitle">Track your purchases and order history</p>
+    </div>
+
+    {% if orders %}
+      <div class="orders-list">
+        {% for order in orders %}
+          <div class="order-card">
+            <div class="order-header">
+              <div class="order-info">
+                <h3>Order #{{ order.order_number }}</h3>
+                <span class="order-date">
+                  <i class="fas fa-calendar"></i> {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                </span>
+              </div>
+              <div class="order-status">
+                <span class="status-badge status-{{ order.status }}">
+                  {% if order.status == 'pending' %}
+                    <i class="fas fa-clock"></i> Pending
+                  {% elif order.status == 'processing' %}
+                    <i class="fas fa-cog fa-spin"></i> Processing
+                  {% elif order.status == 'shipped' %}
+                    <i class="fas fa-shipping-fast"></i> Shipped
+                  {% elif order.status == 'delivered' %}
+                    <i class="fas fa-check-circle"></i> Delivered
+                  {% elif order.status == 'cancelled' %}
+                    <i class="fas fa-times-circle"></i> Cancelled
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+
+            <div class="order-items">
+              {% for item in order.items %}
+                <div class="order-item">
+                  <div class="item-image">
+                    <img src="{{ item.artwork.image if item.artwork else 'https://placehold.co/100x100?text=Item' }}" 
+                         alt="{{ item.artwork_title }}">
+                  </div>
+                  <div class="item-details">
+                    <h4>{{ item.artwork_title }}</h4>
+                    <p class="item-qty">Quantity: {{ item.quantity }}</p>
+                    <p class="item-price">₹{{ item.artwork_price }} × {{ item.quantity }}</p>
+                  </div>
+                  <div class="item-subtotal">
+                    ₹{{ item.subtotal }}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div class="order-summary">
+              <div class="summary-row">
+                <span>Subtotal:</span>
+                <span>₹{{ order.subtotal }}</span>
+              </div>
+              <div class="summary-row">
+                <span>Shipping:</span>
+                <span>₹{{ order.shipping_fee }}</span>
+              </div>
+              <div class="summary-row total">
+                <span>Total:</span>
+                <span>₹{{ order.total_amount }}</span>
+              </div>
+            </div>
+
+            <div class="order-actions">
+              <a href="{{ url_for('order_confirmation', order_id=order.id) }}" class="btn btn-secondary">
+                <i class="fas fa-eye"></i> View Details
+              </a>
+              {% if order.status in ['pending', 'processing'] %}
+                <button class="btn btn-danger" onclick="cancelOrder({{ order.id }})">
+                  <i class="fas fa-times"></i> Cancel Order
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <i class="fas fa-shopping-bag"></i>
+        <h2>No Orders Yet</h2>
+        <p>You haven't placed any orders yet. Start shopping to see your orders here!</p>
+        <a href="{{ url_for('home') }}" class="btn btn-primary">
+          <i class="fas fa-shopping-cart"></i> Start Shopping
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <style>
+    .orders-page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .page-header {
+      margin-bottom: 30px;
+    }
+
+    .page-header h1 {
+      font-size: 2rem;
+      margin: 10px 0;
+      color: var(--color-text);
+    }
+
+    .page-header .subtitle {
+      color: var(--color-text);
+      opacity: 0.7;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--color-primary);
+      text-decoration: none;
+      font-weight: 600;
+      margin-bottom: 10px;
+      transition: all 0.3s;
+    }
+
+    .back-link:hover {
+      gap: 12px;
+    }
+
+    .orders-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .order-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .order-info h3 {
+      color: var(--color-text);
+      margin: 0 0 8px 0;
+    }
+
+    .order-date {
+      color: var(--color-text);
+      opacity: 0.7;
+      font-size: 0.9rem;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .status-pending {
+      background: rgba(255, 193, 7, 0.2);
+      color: #ff9800;
+    }
+
+    .status-processing {
+      background: rgba(33, 150, 243, 0.2);
+      color: #2196F3;
+    }
+
+    .status-shipped {
+      background: rgba(156, 39, 176, 0.2);
+      color: #9C27B0;
+    }
+
+    .status-delivered {
+      background: rgba(76, 175, 80, 0.2);
+      color: #4CAF50;
+    }
+
+    .status-cancelled {
+      background: rgba(244, 67, 54, 0.2);
+      color: #f44336;
+    }
+
+    .order-items {
+      margin: 20px 0;
+    }
+
+    .order-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .order-item:last-child {
+      border-bottom: none;
+    }
+
+    .item-image {
+      flex-shrink: 0;
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .item-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .item-details {
+      flex: 1;
+    }
+
+    .item-details h4 {
+      margin: 0 0 6px 0;
+      color: var(--color-text);
+    }
+
+    .item-qty, .item-price {
+      margin: 2px 0;
+      color: var(--color-text);
+      opacity: 0.7;
+      font-size: 0.9rem;
+    }
+
+    .item-subtotal {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--color-primary);
+    }
+
+    .order-summary {
+      margin: 20px 0;
+      padding: 16px;
+      background: rgba(102, 126, 234, 0.05);
+      border-radius: 8px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+      color: var(--color-text);
+    }
+
+    .summary-row.total {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 2px solid rgba(102, 126, 234, 0.2);
+      color: var(--color-primary);
+    }
+
+    .order-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-secondary {
+      background: var(--color-primary);
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: var(--color-accent);
+      transform: translateY(-2px);
+    }
+
+    .btn-danger {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      color: var(--color-primary);
+      opacity: 0.3;
+      margin-bottom: 20px;
+    }
+
+    .empty-state h2 {
+      color: var(--color-text);
+      margin: 20px 0 10px 0;
+    }
+
+    .empty-state p {
+      color: var(--color-text);
+      opacity: 0.7;
+      margin-bottom: 30px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+      color: white;
+      padding: 14px 28px;
+      font-size: 1.1rem;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    @media (max-width: 768px) {
+      .order-header {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .order-item {
+        flex-wrap: wrap;
+      }
+
+      .item-subtotal {
+        width: 100%;
+        text-align: right;
+      }
+
+      .order-actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+
+  <script>
+    async function cancelOrder(orderId) {
+      if (!confirm('Are you sure you want to cancel this order?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/orders/${orderId}/cancel`, {
+          method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast('Order cancelled successfully', 'success');
+          location.reload();
+        } else {
+          showToast(data.error || 'Failed to cancel order', 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showToast('Error cancelling order', 'error');
+      }
+    }
+  </script>
+{% endblock content %}

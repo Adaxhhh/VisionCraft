@@ -1,0 +1,583 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Artwork | VisionCraft{% endblock title %}
+
+{% block content %}
+<div class="upload-container">
+  
+  <!-- Header Section -->
+  <div class="upload-header">
+    <div class="header-icon">
+      <i class="fas fa-cloud-upload-alt"></i>
+    </div>
+    <h1 class="upload-heading">Upload Your Masterpiece</h1>
+    <p class="upload-subheading">Share your beautiful handicrafts with the world</p>
+  </div>
+
+  <!-- Upload Form -->
+  <div class="upload-form-card">
+    <form class="upload-form" method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data" id="uploadForm">
+      
+      <!-- Basic Information -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <i class="fas fa-info-circle"></i> Basic Information
+        </h3>
+        
+        <div class="form-group">
+          <label for="title">Artwork Title <span class="required">*</span></label>
+          <input type="text" id="title" name="title" required placeholder="e.g., Handwoven Bamboo Basket" class="form-input">
+          <small class="form-help">Give your artwork a descriptive title</small>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description <span class="required">*</span></label>
+          <textarea id="description" name="description" required placeholder="Describe your artwork, materials used, dimensions, and unique features..." class="form-textarea" rows="5"></textarea>
+          <small class="form-help">Tell buyers about your creation (minimum 50 characters)</small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="category">Category</label>
+            <select id="category" name="category" class="form-input">
+              <option value="Pottery">Pottery</option>
+              <option value="Woodcraft">Woodcraft</option>
+              <option value="Weaving">Weaving</option>
+              <option value="Textiles">Textiles</option>
+              <option value="Metalwork">Metalwork</option>
+              <option value="Painting">Painting</option>
+              <option value="Sculpture">Sculpture</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="price">Price (₹) <span class="required">*</span></label>
+            <input type="number" id="price" name="price" required placeholder="299" min="1" class="form-input">
+          </div>
+        </div>
+      </div>
+
+      <!-- Media Upload -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <i class="fas fa-images"></i> Media Files
+        </h3>
+        
+        <!-- Image Upload -->
+        <div class="form-group">
+          <label for="image">Feature Image <span class="required">*</span></label>
+          <div class="file-upload-wrapper">
+            <input type="file" id="image" name="image" accept="image/*" required class="file-input" onchange="previewImage(event)">
+            <label for="image" class="file-upload-label">
+              <div class="file-upload-content">
+                <i class="fas fa-image file-icon"></i>
+                <span class="file-text">Click to upload artwork photo</span>
+                <span class="file-subtext">PNG, JPG, JPEG, WebP (Max 5MB)</span>
+              </div>
+            </label>
+            <div id="imagePreview" class="file-preview" style="display: none;">
+              <img id="previewImg" src="" alt="Preview">
+              <button type="button" class="remove-file" onclick="removeImage()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D Model Upload -->
+        <div class="form-group">
+          <label for="model">3D Model (Optional)</label>
+          <div class="file-upload-wrapper">
+            <input type="file" id="model" name="model" accept=".glb,.gltf" class="file-input" onchange="preview3DModel(event)">
+            <label for="model" class="file-upload-label">
+              <div class="file-upload-content">
+                <i class="fas fa-cube file-icon"></i>
+                <span class="file-text">Click to upload 3D model</span>
+                <span class="file-subtext">GLB or GLTF format (Max 10MB)</span>
+              </div>
+            </label>
+            <div id="modelPreview" class="file-preview model-preview" style="display: none;">
+              <i class="fas fa-cube model-icon"></i>
+              <span id="modelName"></span>
+              <button type="button" class="remove-file" onclick="remove3DModel()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <small class="form-help">
+            <i class="fas fa-info-circle"></i> Enable AR viewing by uploading a 3D model of your artwork
+          </small>
+        </div>
+      </div>
+
+      <!-- Artisan Information -->
+      <div class="form-section">
+        <h3 class="section-title">
+          <i class="fas fa-user-tie"></i> Artisan Information
+        </h3>
+        
+        <div class="form-group">
+          <label for="artist_name">Your Name <span class="required">*</span></label>
+          <input type="text" id="artist_name" name="artist_name" required placeholder="Enter your name" class="form-input">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="your.email@example.com" class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="+91 XXXXX XXXXX" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="location">Location</label>
+          <input type="text" id="location" name="location" placeholder="City, State" class="form-input">
+        </div>
+      </div>
+
+      <!-- Terms -->
+      <div class="form-section">
+        <label class="checkbox-wrapper">
+          <input type="checkbox" name="terms" required>
+          <span class="checkbox-text">I confirm that I own the rights to this artwork and agree to the <a href="#" class="link">Terms of Service</a></span>
+        </label>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn submit-btn">
+        <i class="fas fa-check-circle"></i> Upload Artwork
+      </button>
+    </form>
+  </div>
+
+  <!-- Info Box -->
+  <div class="info-box">
+    <div class="info-icon">
+      <i class="fas fa-lightbulb"></i>
+    </div>
+    <div class="info-content">
+      <h4>Tips for Better Listings</h4>
+      <ul>
+        <li><strong>High-Quality Photos:</strong> Use well-lit, clear images showing your artwork from multiple angles</li>
+        <li><strong>Detailed Descriptions:</strong> Include materials, dimensions, creation process, and care instructions</li>
+        <li><strong>3D Models:</strong> Upload 3D models to enable AR viewing and boost engagement</li>
+        <li><strong>Fair Pricing:</strong> Research similar items and price competitively</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<style>
+  .upload-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* Header */
+  .upload-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .header-icon {
+    font-size: 80px;
+    color: var(--color-light-text);
+    margin-bottom: 20px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .upload-heading {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--color-light-text);
+    margin: 0 0 10px 0;
+  }
+
+  .upload-subheading {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+  }
+
+  /* Form Card */
+  .upload-form-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: var(--elevation-4);
+    margin-bottom: 30px;
+  }
+
+  .upload-form {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .form-section {
+    padding-bottom: 30px;
+    border-bottom: 2px solid #f0f0f0;
+  }
+
+  .form-section:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--color-text);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title i {
+    color: var(--color-primary);
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--color-text);
+    font-size: 1rem;
+  }
+
+  .required {
+    color: #e74c3c;
+  }
+
+  .form-input,
+  .form-textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.3s;
+    background: white;
+  }
+
+  .form-input:focus,
+  .form-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  }
+
+  .form-textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .form-help {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.875rem;
+    color: #666;
+  }
+
+  /* File Upload */
+  .file-upload-wrapper {
+    position: relative;
+  }
+
+  .file-input {
+    display: none;
+  }
+
+  .file-upload-label {
+    display: block;
+    padding: 40px 20px;
+    border: 3px dashed #d0d0d0;
+    border-radius: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #fafafa;
+  }
+
+  .file-upload-label:hover {
+    border-color: var(--color-primary);
+    background: rgba(102, 126, 234, 0.05);
+  }
+
+  .file-upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .file-icon {
+    font-size: 3rem;
+    color: var(--color-primary);
+  }
+
+  .file-text {
+    font-weight: 700;
+    color: var(--color-text);
+    font-size: 1.1rem;
+  }
+
+  .file-subtext {
+    font-size: 0.875rem;
+    color: #666;
+  }
+
+  /* File Preview */
+  .file-preview {
+    margin-top: 15px;
+    border: 2px solid var(--color-primary);
+    border-radius: 16px;
+    padding: 15px;
+    position: relative;
+    background: white;
+  }
+
+  .file-preview img {
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: 12px;
+  }
+
+  .model-preview {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+  }
+
+  .model-icon {
+    font-size: 2.5rem;
+    color: var(--color-primary);
+  }
+
+  .remove-file {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    font-size: 1rem;
+  }
+
+  .remove-file:hover {
+    background: #c0392b;
+    transform: scale(1.1);
+  }
+
+  /* Checkbox */
+  .checkbox-wrapper {
+    display: flex;
+    align-items: start;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .checkbox-wrapper input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    cursor: pointer;
+  }
+
+  .checkbox-text {
+    font-size: 0.95rem;
+    color: var(--color-text);
+    line-height: 1.5;
+  }
+
+  .link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .link:hover {
+    text-decoration: underline;
+  }
+
+  /* Submit Button */
+  .submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    color: white;
+    padding: 18px 40px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.3s;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+  }
+
+  .submit-btn:active {
+    transform: translateY(0);
+  }
+
+  /* Info Box */
+  .info-box {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: var(--elevation-3);
+    display: flex;
+    gap: 20px;
+    border-left: 5px solid #f39c12;
+  }
+
+  .info-icon {
+    font-size: 2.5rem;
+    color: #f39c12;
+  }
+
+  .info-content h4 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--color-text);
+    margin: 0 0 15px 0;
+  }
+
+  .info-content ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--color-text);
+  }
+
+  .info-content li {
+    margin-bottom: 10px;
+    line-height: 1.6;
+  }
+
+  .info-content strong {
+    color: var(--color-primary);
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    .upload-container {
+      padding: 15px;
+    }
+
+    .upload-form-card {
+      padding: 25px;
+    }
+
+    .upload-heading {
+      font-size: 2rem;
+    }
+
+    .header-icon {
+      font-size: 60px;
+    }
+
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+
+    .info-box {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .info-content ul {
+      text-align: left;
+    }
+  }
+</style>
+
+<script>
+  // Image Preview
+  function previewImage(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('previewImg').src = e.target.result;
+        document.getElementById('imagePreview').style.display = 'block';
+        event.target.nextElementSibling.style.display = 'none';
+      }
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function removeImage() {
+    document.getElementById('image').value = '';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.querySelector('label[for="image"]').style.display = 'block';
+  }
+
+  // 3D Model Preview
+  function preview3DModel(event) {
+    const file = event.target.files[0];
+    if (file) {
+      document.getElementById('modelName').textContent = file.name;
+      document.getElementById('modelPreview').style.display = 'flex';
+      event.target.nextElementSibling.style.display = 'none';
+    }
+  }
+
+  function remove3DModel() {
+    document.getElementById('model').value = '';
+    document.getElementById('modelPreview').style.display = 'none';
+    document.querySelector('label[for="model"]').style.display = 'block';
+  }
+
+  // Form Validation
+  document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    const description = document.getElementById('description').value;
+    if (description.length < 50) {
+      e.preventDefault();
+      alert('Description must be at least 50 characters long');
+      return false;
+    }
+  });
+</script>
+{% endblock content %}

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}{{ art.title }} | Art Discovery{% endblock title %}
+
+{% block content %}
+  <div class="art-page">
+    <a href="{{ url_for('home') }}" class="back-link"><i class="fas fa-chevron-left"></i> Back to Feed</a>
+    
+    <div class="art-image-container">
+      <img src="{{ art.image }}" 
+           alt="{{ art.title }}" 
+           onerror="this.onerror=null;this.src='https://placehold.co/600x600/667eea/ffffff?text=Art+Image';" 
+           class="main-art-image">
+    </div>
+
+    <div class="art-info-section">
+      <span class="art-tag">Featured</span>
+      <h1 class="art-title">{{ art.title }}</h1>
+      <p class="art-artist-detail">by <strong>{{ art.artist_name }}</strong></p>
+
+      <div class="pricing-ar-block">
+        <div class="price-detail" aria-label="Estimated Price">₹{{ art.price }}</div>
+        <a href="{{ url_for('view_in_ar', art_id=art.id) }}" class="btn ar-link-btn" aria-label="View {{ art.title }} in augmented reality">
+          <i class="fas fa-vr-cardboard"></i> View in AR
+        </a>
+      </div>
+
+      <h3 class="section-heading">Description</h3>
+      <p class="art-description-long">{{ art.description }}</p>
+
+      {% if art.state %}
+      <div class="art-origin">
+        <h3 class="section-heading">Origin</h3>
+        <p><i class="fas fa-map-marker-alt"></i> {{ art.state }}, India</p>
+      </div>
+      {% endif %}
+
+      {% if art.making_process %}
+      <div class="art-process">
+        <h3 class="section-heading">Craft Technique</h3>
+        <p>{{ art.making_process }}</p>
+      </div>
+      {% endif %}
+
+      <div class="interaction-buttons">
+        {% if current_user.is_authenticated %}
+          <button onclick="addToCart({{ art.id }})" class="btn primary-action"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn primary-action"><i class="fas fa-shopping-cart"></i> Login to Purchase</a>
+        {% endif %}
+        <button class="btn secondary-action" onclick="shareArtwork()"><i class="fas fa-share-alt"></i> Share</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .art-origin, .art-process {
+      margin: 20px 0;
+      padding: 15px;
+      background: var(--glass-bg);
+      border-radius: 12px;
+      border-left: 4px solid var(--color-primary);
+    }
+
+    .art-origin p, .art-process p {
+      color: var(--card-text);
+      margin: 5px 0;
+      font-size: 1rem;
+    }
+
+    .art-origin i {
+      color: var(--color-primary);
+      margin-right: 8px;
+    }
+  </style>
+
+  <script>
+    // Add to cart function
+    async function addToCart(artId) {
+      try {
+        const response = await fetch(`/api/cart/add/${artId}`, { method: 'POST' });
+        const data = await response.json();
+        if (data.success) {
+          showToast(data.message || 'Added to cart!', 'success');
+          // Update cart badge
+          const cartBadge = document.querySelector('.cart-badge');
+          if (cartBadge) {
+            cartBadge.textContent = data.cart_count;
+          } else if (data.cart_count > 0) {
+            // Create badge if it doesn't exist
+            const cartLink = document.querySelector('a[href*="cart"]');
+            if (cartLink && !cartLink.querySelector('.cart-badge')) {
+              const badge = document.createElement('span');
+              badge.className = 'cart-badge';
+              badge.textContent = data.cart_count;
+              cartLink.appendChild(badge);
+            }
+          }
+        } else {
+          showToast('Failed to add to cart', 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showToast('Error adding to cart', 'error');
+      }
+    }
+
+    // Share artwork function
+    function shareArtwork() {
+      if (navigator.share) {
+        navigator.share({
+          title: '{{ art.title }}',
+          text: 'Check out {{ art.title }} by {{ art.artist_name }} on VisionCraft!',
+          url: window.location.href
+        }).catch(err => console.log('Error sharing:', err));
+      } else {
+        // Fallback: copy link to clipboard
+        navigator.clipboard.writeText(window.location.href);
+        showToast('Link copied to clipboard!', 'success');
+      }
+    }
+  </script>
+{% endblock content %}

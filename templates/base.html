@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Discover, share, and view artisan crafts in augmented reality.">
+  <title>{% block title %}VisionCraft AR Marketplace{% endblock title %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='toast.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="{{ url_for('static', filename='toast.js') }}"></script>
+  
+  <!-- Apply theme immediately to prevent flash -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('theme');
+      // Default to light theme if no saved preference
+      const theme = savedTheme || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+  
+  <style>
+    /* Modern UI Improvements */
+    :root {
+      --header-height: 70px;
+      --bottom-nav-height: 65px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      padding-bottom: var(--bottom-nav-height);
+    }
+
+    main {
+      padding-top: var(--header-height);
+    }
+
+    /* Improved Header */
+    .top-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--header-height);
+      padding: 0 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+    }
+
+    .brand-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin: 0;
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin: 0;
+    }
+
+    /* Language Toggle Button */
+    .lang-toggle {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lang-toggle:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .lang-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    /* Language Dropdown */
+    .lang-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      min-width: 200px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s;
+      z-index: 1000;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .lang-dropdown.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .lang-dropdown-header {
+      padding: 16px;
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+      border-radius: 16px 16px 0 0;
+      color: white;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .lang-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: var(--color-text);
+      text-decoration: none;
+      transition: all 0.2s;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .lang-item:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .lang-item.active {
+      background: rgba(102, 126, 234, 0.15);
+      color: var(--color-primary);
+    }
+
+    .lang-item .flag {
+      font-size: 1.3rem;
+      width: 24px;
+      text-align: center;
+    }
+
+    /* Hide Google Translate elements */
+    .goog-te-banner-frame,
+    .goog-te-gadget,
+    #google_translate_element,
+    .skiptranslate {
+      display: none !important;
+    }
+
+    body {
+      top: 0 !important;
+    }
+
+    /* Floating Cart Button */
+    .floating-cart-btn {
+      position: fixed;
+      bottom: calc(var(--bottom-nav-height) + 20px);
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+      z-index: 999;
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      text-decoration: none;
+    }
+
+    .floating-cart-btn:hover {
+      transform: scale(1.15) rotate(10deg);
+      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6);
+    }
+
+    .floating-cart-btn .cart-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #e74c3c;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      border: 3px solid white;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    /* Improved Bottom Navigation */
+    .bottom-nav {
+      height: var(--bottom-nav-height);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 8px 0;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      padding: 8px 4px;
+      text-decoration: none;
+      color: var(--color-text);
+      opacity: 0.6;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .nav-item i {
+      font-size: 22px;
+      transition: all 0.3s;
+    }
+
+    .nav-item span {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .nav-item.active {
+      opacity: 1;
+      color: var(--color-primary);
+    }
+
+    .nav-item.active i {
+      transform: translateY(-3px);
+    }
+
+    .nav-item:active {
+      transform: scale(0.95);
+    }
+
+    /* Remove old cart badge from nav */
+    .nav-item .cart-badge {
+      display: none;
+    }
+
+    /* User Menu Improvements */
+    .user-menu-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .user-menu-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .user-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      min-width: 220px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+
+    .user-dropdown.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+      border-radius: 16px 16px 0 0;
+      color: white;
+    }
+
+    .dropdown-header i {
+      font-size: 2rem;
+    }
+
+    .dropdown-username {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .dropdown-role {
+      font-size: 0.85rem;
+      opacity: 0.9;
+      text-transform: capitalize;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: #e0e0e0;
+      margin: 8px 0;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: var(--color-text);
+      text-decoration: none;
+      transition: all 0.2s;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .dropdown-item:first-of-type {
+      margin-top: 8px;
+    }
+
+    .dropdown-item:last-of-type {
+      margin-bottom: 8px;
+    }
+
+    .dropdown-item i {
+      font-size: 1.1rem;
+      width: 20px;
+      text-align: center;
+      color: var(--color-primary);
+    }
+
+    .dropdown-item:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .dropdown-item .badge {
+      margin-left: auto;
+      background: var(--color-primary);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    .logout-item {
+      color: #e74c3c;
+    }
+
+    .logout-item i {
+      color: #e74c3c;
+    }
+
+    .logout-item:hover {
+      background: rgba(231, 76, 60, 0.1);
+    }
+
+    @media (max-width: 768px) {
+      .user-name {
+        display: none;
+      }
+
+      .user-menu-btn {
+        padding: 8px 12px;
+      }
+
+      .user-dropdown {
+        right: -10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-header">
+    <div class="brand">
+      <div class="logo-icon"><i class="fas fa-palette"></i></div>
+      <div>
+        <h1 class="brand-title">VisionCraft</h1>
+        <p class="brand-subtitle">Artisan Marketplace</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+        <i class="fas fa-moon" id="themeIcon"></i>
+      </button>
+      <div class="lang-container">
+        <button id="langToggle" class="lang-toggle" aria-label="Change language" title="Translate Page">
+          <i class="fas fa-language"></i>
+        </button>
+        <div class="lang-dropdown" id="langDropdown">
+          <div class="lang-dropdown-header">Select Language</div>
+          <button class="lang-item active" data-lang="en">
+            <span class="flag">🇬🇧</span>
+            <span>English</span>
+          </button>
+          <button class="lang-item" data-lang="hi">
+            <span class="flag">🇮🇳</span>
+            <span>हिन्दी (Hindi)</span>
+          </button>
+          <button class="lang-item" data-lang="ta">
+            <span class="flag">🇮🇳</span>
+            <span>தமிழ் (Tamil)</span>
+          </button>
+          <button class="lang-item" data-lang="te">
+            <span class="flag">🇮🇳</span>
+            <span>తెలుగు (Telugu)</span>
+          </button>
+          <button class="lang-item" data-lang="bn">
+            <span class="flag">🇮🇳</span>
+            <span>বাংলা (Bengali)</span>
+          </button>
+          <button class="lang-item" data-lang="mr">
+            <span class="flag">🇮🇳</span>
+            <span>मराठी (Marathi)</span>
+          </button>
+          <button class="lang-item" data-lang="gu">
+            <span class="flag">🇮🇳</span>
+            <span>ગુજરાતી (Gujarati)</span>
+          </button>
+          <button class="lang-item" data-lang="kn">
+            <span class="flag">🇮🇳</span>
+            <span>ಕನ್ನಡ (Kannada)</span>
+          </button>
+          <button class="lang-item" data-lang="ml">
+            <span class="flag">🇮🇳</span>
+            <span>മലയാളം (Malayalam)</span>
+          </button>
+          <button class="lang-item" data-lang="pa">
+            <span class="flag">🇮🇳</span>
+            <span>ਪੰਜਾਬੀ (Punjabi)</span>
+          </button>
+        </div>
+      </div>
+      {% if current_user.is_authenticated %}
+      <div class="user-menu-container">
+        <button class="user-menu-btn" id="userMenuBtn">
+          <i class="fas fa-user-circle"></i>
+          <span class="user-name">{{ current_user.username }}</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dropdown-header">
+            <i class="fas fa-user-circle"></i>
+            <div>
+              <div class="dropdown-username">{{ current_user.username }}</div>
+              <div class="dropdown-role">{{ current_user.role }}</div>
+            </div>
+          </div>
+          <div class="dropdown-divider"></div>
+          <a href="{{ url_for('profile') }}" class="dropdown-item">
+            <i class="fas fa-user"></i>
+            <span>Profile</span>
+          </a>
+          {% if current_user.role == 'seller' %}
+          <a href="{{ url_for('seller_analytics') }}}" class="dropdown-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Analytics</span>
+          </a>
+          <a href="{{ url_for('upload') }}" class="dropdown-item">
+            <i class="fas fa-upload"></i>
+            <span>Upload Artwork</span>
+          </a>
+          {% else %}
+          <a href="{{ url_for('cart') }}" class="dropdown-item">
+            <i class="fas fa-shopping-cart"></i>
+            <span>My Cart</span>
+            {% if cart_count > 0 %}
+            <span class="badge">{{ cart_count }}</span>
+            {% endif %}
+          </a>
+          <a href="{{ url_for('my_orders') }}" class="dropdown-item">
+            <i class="fas fa-box"></i>
+            <span>My Orders</span>
+          </a>
+          {% endif %}
+          <div class="dropdown-divider"></div>
+          <a href="{{ url_for('logout') }}" class="dropdown-item logout-item">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </div>
+      {% else %}
+      <a href="{{ url_for('login') }}" class="btn scan-btn" aria-label="Login">
+        <i class="fas fa-sign-in-alt"></i> <span>Login</span>
+      </a>
+      {% endif %}
+    </div>
+  </header>
+
+  <main>
+    {% block content %}{% endblock content %}
+  </main>
+
+  <!-- Floating Cart Button (Customers Only) -->
+  {% if current_user.is_authenticated and current_user.role == 'customer' %}
+    <a href="{{ url_for('cart') }}" class="floating-cart-btn" aria-label="Shopping Cart">
+      <i class="fas fa-shopping-cart"></i>
+      {% if cart_count > 0 %}
+      <span class="cart-badge">{{ cart_count }}</span>
+      {% endif %}
+    </a>
+  {% endif %}
+
+  <nav class="bottom-nav">
+    {% if current_user.is_authenticated and current_user.role == 'seller' %}
+      <!-- SELLER NAVIGATION -->
+      <a href="{{ url_for('seller_analytics') }}" class="nav-item {% if 'seller_analytics' in request.endpoint %}active{% endif %}">
+        <i class="fas fa-chart-line"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('home') }}" class="nav-item {% if request.endpoint == 'home' %}active{% endif %}">
+        <i class="fas fa-store"></i>
+        <span>Browse</span>
+      </a>
+      <a href="{{ url_for('upload') }}" class="nav-item {% if request.endpoint == 'upload' %}active{% endif %}">
+        <i class="fas fa-plus-circle"></i>
+        <span>Upload</span>
+      </a>
+      <a href="{{ url_for('events') }}" class="nav-item {% if request.endpoint == 'events' %}active{% endif %}">
+        <i class="fas fa-calendar"></i>
+        <span>Events</span>
+      </a>
+      <a href="{{ url_for('profile') }}" class="nav-item {% if request.endpoint == 'profile' %}active{% endif %}">
+        <i class="fas fa-user-circle"></i>
+        <span>Profile</span>
+      </a>
+    {% elif current_user.is_authenticated and current_user.role == 'customer' %}
+      <!-- CUSTOMER NAVIGATION -->
+      <a href="{{ url_for('home') }}" class="nav-item {% if request.endpoint == 'home' %}active{% endif %}">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </a>
+      <a href="{{ url_for('search') }}" class="nav-item {% if request.endpoint == 'search' %}active{% endif %}">
+        <i class="fas fa-search"></i>
+        <span>Search</span>
+      </a>
+      <a href="{{ url_for('likes') }}" class="nav-item {% if request.endpoint == 'likes' %}active{% endif %}">
+        <i class="fas fa-heart"></i>
+        <span>Favorites</span>
+      </a>
+      <a href="{{ url_for('events') }}" class="nav-item {% if request.endpoint == 'events' %}active{% endif %}">
+        <i class="fas fa-calendar"></i>
+        <span>Events</span>
+      </a>
+      <a href="{{ url_for('profile') }}" class="nav-item {% if request.endpoint == 'profile' %}active{% endif %}">
+        <i class="fas fa-user-circle"></i>
+        <span>Profile</span>
+      </a>
+    {% else %}
+      <!-- GUEST NAVIGATION -->
+      <a href="{{ url_for('home') }}" class="nav-item {% if request.endpoint == 'home' %}active{% endif %}">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </a>
+      <a href="{{ url_for('search') }}" class="nav-item {% if request.endpoint == 'search' %}active{% endif %}">
+        <i class="fas fa-search"></i>
+        <span>Search</span>
+      </a>
+      <a href="{{ url_for('events') }}" class="nav-item {% if request.endpoint == 'events' %}active{% endif %}">
+        <i class="fas fa-calendar"></i>
+        <span>Events</span>
+      </a>
+      <a href="{{ url_for('login') }}" class="nav-item {% if request.endpoint == 'login' %}active{% endif %}">
+        <i class="fas fa-sign-in-alt"></i>
+        <span>Login</span>
+      </a>
+    {% endif %}
+  </nav>
+
+  <!-- Hidden Google Translate Element -->
+  <div id="google_translate_element" style="display: none;"></div>
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,hi,ta,te,bn,mr,gu,kn,ml,pa,or,as',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+        autoDisplay: false
+      }, 'google_translate_element');
+    }
+  </script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+  <script>
+    // ========================================
+    // THEME TOGGLE (Dark/Light Mode)
+    // ========================================
+    document.addEventListener('DOMContentLoaded', function() {
+      const themeToggle = document.getElementById('themeToggle');
+      const themeIcon = document.getElementById('themeIcon');
+      const htmlElement = document.documentElement;
+
+      if (!themeToggle || !themeIcon) {
+        console.error('Theme toggle elements not found');
+        return;
+      }
+
+      // Load saved theme from localStorage or default to light
+      let savedTheme = localStorage.getItem('theme');
+      
+      // If no saved theme, default to light mode
+      if (!savedTheme) {
+        savedTheme = 'light';
+      }
+      
+      htmlElement.setAttribute('data-theme', savedTheme);
+      updateThemeIcon(savedTheme);
+
+      function updateThemeIcon(theme) {
+        if (theme === 'dark') {
+          themeIcon.className = 'fas fa-sun';
+        } else {
+          themeIcon.className = 'fas fa-moon';
+        }
+      }
+
+      themeToggle.addEventListener('click', () => {
+        const currentTheme = htmlElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        htmlElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+        
+        // Add animation
+        themeToggle.style.transform = 'rotate(360deg)';
+        setTimeout(() => {
+          themeToggle.style.transform = 'rotate(0deg)';
+        }, 300);
+      });
+    });
+
+    // ========================================
+    // USER MENU DROPDOWN
+    // ========================================
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    const userDropdown = document.getElementById('userDropdown');
+
+    if (userMenuBtn && userDropdown) {
+      userMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userDropdown.classList.toggle('show');
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+          userDropdown.classList.remove('show');
+        }
+      });
+    }
+
+    // ========================================
+    // LANGUAGE DROPDOWN
+    // ========================================
+    const langToggle = document.getElementById('langToggle');
+    const langDropdown = document.getElementById('langDropdown');
+    const langItems = document.querySelectorAll('.lang-item');
+
+    if (langToggle && langDropdown) {
+      langToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        langDropdown.classList.toggle('show');
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!langToggle.contains(e.target) && !langDropdown.contains(e.target)) {
+          langDropdown.classList.remove('show');
+        }
+      });
+
+      // Language selection
+      langItems.forEach(item => {
+        item.addEventListener('click', () => {
+          const lang = item.getAttribute('data-lang');
+          
+          // Update active state
+          langItems.forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+          
+          // Trigger Google Translate
+          triggerGoogleTranslate(lang);
+          
+          // Close dropdown
+          langDropdown.classList.remove('show');
+          
+          // Store preference
+          localStorage.setItem('preferredLanguage', lang);
+        });
+      });
+    }
+
+    // ========================================
+    // GOOGLE TRANSLATE INTEGRATION
+    // ========================================
+    function triggerGoogleTranslate(lang) {
+      if (lang === 'en') {
+        // Reset to original language
+        const iframe = document.querySelector('.goog-te-banner-frame');
+        if (iframe) {
+          const innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+          const restoreBtn = innerDoc.querySelector('button');
+          if (restoreBtn) restoreBtn.click();
+        }
+        // Also try to clear cookie
+        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        location.reload();
+      } else {
+        // Set cookie for Google Translate
+        document.cookie = `googtrans=/en/${lang}; path=/`;
+        location.reload();
+      }
+    }
+
+    // Load saved language preference on page load
+    window.addEventListener('load', () => {
+      const savedLang = localStorage.getItem('preferredLanguage');
+      if (savedLang && savedLang !== 'en') {
+        // Apply saved language after a short delay to ensure Google Translate is loaded
+        setTimeout(() => {
+          const langItem = document.querySelector(`.lang-item[data-lang="${savedLang}"]`);
+          if (langItem && !document.cookie.includes(`googtrans=/en/${savedLang}`)) {
+            langItems.forEach(i => i.classList.remove('active'));
+            langItem.classList.add('active');
+            triggerGoogleTranslate(savedLang);
+          }
+        }, 1000);
+      }
+    });
+  </script>
+
+</body>
+</html>

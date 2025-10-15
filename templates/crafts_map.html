@@ -1,0 +1,663 @@
+{% extends "base.html" %}
+
+{% block title %}Crafts Map of India | VisionCraft{% endblock title %}
+
+{% block content %}
+  <div class="crafts-map-container">
+    <div class="map-header">
+      <a href="{{ url_for('home') }}" class="back-btn">
+        <i class="fas fa-arrow-left"></i> Back
+      </a>
+      <h1>🗺️ Crafts Map of India</h1>
+      <p>Explore India's rich heritage - Click on any state to discover its signature crafts!</p>
+    </div>
+
+    <div class="map-layout">
+      <!-- Interactive India Map -->
+      <div class="india-map-section">
+        <svg id="indiaMap" viewBox="0 0 1000 1200" xmlns="http://www.w3.org/2000/svg">
+          <!-- Detailed India Map with clickable states -->
+          
+          <!-- Jammu & Kashmir -->
+          <path id="jammukashmir" class="state" d="M 280,20 L 320,30 L 340,50 L 350,80 L 360,110 L 350,140 L 330,160 L 310,170 L 290,160 L 270,140 L 260,110 L 250,80 L 260,50 Z" data-state="Jammu & Kashmir" />
+          <text x="310" y="100" class="state-label">J&K</text>
+          
+          <!-- Himachal Pradesh -->
+          <path id="himachalpradesh" class="state" d="M 310,170 L 350,180 L 370,200 L 360,220 L 340,230 L 320,220 L 300,210 Z" data-state="Himachal Pradesh" />
+          <text x="335" y="210" class="state-label" style="font-size:11px">HP</text>
+          
+          <!-- Punjab -->
+          <path id="punjab" class="state" d="M 270,140 L 310,170 L 300,210 L 280,220 L 260,210 L 250,180 Z" data-state="Punjab" />
+          <text x="280" y="190" class="state-label" style="font-size:11px">PUN</text>
+          
+          <!-- Uttarakhand -->
+          <path id="uttarakhand" class="state" d="M 340,230 L 380,240 L 400,260 L 390,280 L 370,285 L 350,275 L 335,255 Z" data-state="Uttarakhand" />
+          <text x="370" y="265" class="state-label" style="font-size:11px">UK</text>
+          
+          <!-- Haryana -->
+          <path id="haryana" class="state" d="M 260,210 L 300,210 L 320,240 L 310,260 L 290,270 L 270,260 L 255,240 Z" data-state="Haryana" />
+          <text x="285" y="245" class="state-label" style="font-size:11px">HAR</text>
+          
+          <!-- Delhi -->
+          <circle id="delhi" class="state" cx="295" cy="250" r="8" data-state="Delhi" />
+          <text x="295" y="253" class="state-label" style="font-size:8px">DL</text>
+          
+          <!-- Rajasthan -->
+          <path id="rajasthan" class="state" d="M 180,240 L 260,210 L 290,270 L 310,300 L 320,350 L 310,400 L 290,440 L 260,460 L 230,450 L 200,420 L 180,380 L 160,340 L 150,300 L 165,260 Z" data-state="Rajasthan" />
+          <text x="240" y="360" class="state-label">RAJ</text>
+          
+          <!-- Uttar Pradesh -->
+          <path id="uttarpradesh" class="state" d="M 310,260 L 390,280 L 450,290 L 510,300 L 550,310 L 560,340 L 550,370 L 520,380 L 480,375 L 440,370 L 400,360 L 360,350 L 330,330 L 310,300 Z" data-state="Uttar Pradesh" />
+          <text x="450" y="340" class="state-label">UP</text>
+          
+          <!-- Bihar -->
+          <path id="bihar" class="state" d="M 550,310 L 620,315 L 660,325 L 680,345 L 675,365 L 650,375 L 620,380 L 590,375 L 560,365 L 540,350 Z" data-state="Bihar" />
+          <text x="615" y="350" class="state-label">BIH</text>
+          
+          <!-- West Bengal -->
+          <path id="westbengal" class="state" d="M 660,325 L 710,330 L 740,350 L 750,380 L 745,410 L 730,440 L 710,460 L 690,450 L 675,430 L 665,400 L 660,370 L 665,345 Z" data-state="West Bengal" />
+          <text x="705" y="395" class="state-label">WB</text>
+          
+          <!-- Sikkim -->
+          <path id="sikkim" class="state" d="M 710,330 L 730,332 L 735,345 L 728,355 L 715,353 Z" data-state="Sikkim" />
+          <text x="722" y="345" class="state-label" style="font-size:9px">SK</text>
+          
+          <!-- Assam -->
+          <path id="assam" class="state" d="M 740,350 L 800,360 L 850,365 L 870,380 L 860,400 L 830,410 L 800,405 L 770,395 L 750,380 Z" data-state="Assam" />
+          <text x="810" y="385" class="state-label">ASM</text>
+          
+          <!-- Arunachal Pradesh -->
+          <path id="arunachalpradesh" class="state" d="M 800,360 L 870,350 L 920,340 L 950,350 L 945,380 L 920,400 L 880,405 L 850,395 L 830,380 Z" data-state="Arunachal Pradesh" />
+          <text x="890" y="375" class="state-label" style="font-size:10px">AP</text>
+          
+          <!-- Nagaland -->
+          <path id="nagaland" class="state" d="M 870,380 L 900,385 L 915,400 L 910,420 L 890,425 L 870,415 Z" data-state="Nagaland" />
+          <text x="890" y="405" class="state-label" style="font-size:9px">NL</text>
+          
+          <!-- Manipur -->
+          <path id="manipur" class="state" d="M 870,415 L 890,425 L 895,445 L 880,455 L 865,445 Z" data-state="Manipur" />
+          <text x="880" y="440" class="state-label" style="font-size:9px">MN</text>
+          
+          <!-- Mizoram -->
+          <path id="mizoram" class="state" d="M 865,445 L 880,455 L 880,480 L 865,490 L 850,480 L 855,460 Z" data-state="Mizoram" />
+          <text x="867" y="470" class="state-label" style="font-size:9px">MZ</text>
+          
+          <!-- Tripura -->
+          <path id="tripura" class="state" d="M 830,410 L 850,420 L 855,445 L 840,455 L 825,445 Z" data-state="Tripura" />
+          <text x="840" y="440" class="state-label" style="font-size:9px">TR</text>
+          
+          <!-- Meghalaya -->
+          <path id="meghalaya" class="state" d="M 800,405 L 830,410 L 825,435 L 805,440 L 790,430 Z" data-state="Meghalaya" />
+          <text x="810" y="425" class="state-label" style="font-size:9px">ML</text>
+          
+          <!-- Jharkhand -->
+          <path id="jharkhand" class="state" d="M 620,380 L 680,385 L 690,410 L 685,435 L 660,450 L 630,450 L 610,435 L 605,410 Z" data-state="Jharkhand" />
+          <text x="650" y="420" class="state-label">JHR</text>
+          
+          <!-- Odisha -->
+          <path id="odisha" class="state" d="M 660,450 L 690,450 L 710,480 L 720,520 L 710,560 L 680,585 L 650,580 L 630,550 L 635,510 L 645,475 Z" data-state="Odisha" />
+          <text x="675" y="525" class="state-label">OD</text>
+          
+          <!-- Chhattisgarh -->
+          <path id="chhattisgarh" class="state" d="M 520,380 L 610,385 L 630,450 L 635,510 L 610,530 L 570,535 L 540,520 L 515,480 L 510,440 Z" data-state="Chhattisgarh" />
+          <text x="570" y="465" class="state-label">CG</text>
+          
+          <!-- Madhya Pradesh -->
+          <path id="madhyapradesh" class="state" d="M 310,400 L 400,360 L 480,375 L 520,380 L 510,440 L 490,480 L 460,500 L 420,505 L 380,500 L 340,485 L 310,460 L 295,430 Z" data-state="Madhya Pradesh" />
+          <text x="420" y="450" class="state-label">MP</text>
+          
+          <!-- Gujarat -->
+          <path id="gujarat" class="state" d="M 150,300 L 180,380 L 200,420 L 220,460 L 240,500 L 250,540 L 245,580 L 220,600 L 190,590 L 160,560 L 140,520 L 125,470 L 120,420 L 130,370 L 140,330 Z" data-state="Gujarat" />
+          <text x="185" y="485" class="state-label">GUJ</text>
+          
+          <!-- Maharashtra -->
+          <path id="maharashtra" class="state" d="M 260,460 L 310,460 L 380,500 L 420,505 L 460,520 L 480,550 L 485,590 L 470,620 L 440,640 L 400,650 L 360,645 L 320,630 L 290,610 L 265,580 L 250,540 L 245,500 Z" data-state="Maharashtra" />
+          <text x="370" y="575" class="state-label">MAH</text>
+          
+          <!-- Goa -->
+          <path id="goa" class="state" d="M 290,610 L 320,630 L 315,655 L 295,665 L 280,650 Z" data-state="Goa" />
+          <text x="302" y="645" class="state-label" style="font-size:10px">GOA</text>
+          
+          <!-- Karnataka -->
+          <path id="karnataka" class="state" d="M 280,650 L 315,655 L 360,645 L 400,650 L 430,670 L 450,700 L 455,740 L 445,780 L 420,810 L 385,825 L 350,820 L 320,800 L 295,770 L 280,730 L 275,690 Z" data-state="Karnataka" />
+          <text x="370" y="750" class="state-label">KAR</text>
+          
+          <!-- Andhra Pradesh -->
+          <path id="andhrapradesh" class="state" d="M 440,640 L 485,590 L 540,565 L 570,565 L 600,580 L 630,610 L 650,650 L 655,690 L 645,730 L 620,760 L 590,770 L 560,765 L 530,750 L 500,720 L 480,680 L 465,650 Z" data-state="Andhra Pradesh" />
+          <text x="575" y="685" class="state-label">AP</text>
+          
+          <!-- Telangana -->
+          <path id="telangana" class="state" d="M 460,520 L 515,525 L 540,565 L 530,600 L 500,620 L 470,620 L 450,600 L 445,560 Z" data-state="Telangana" />
+          <text x="495" y="580" class="state-label" style="font-size:11px">TS</text>
+          
+          <!-- Tamil Nadu -->
+          <path id="tamilnadu" class="state" d="M 385,825 L 445,780 L 480,785 L 520,800 L 550,830 L 560,870 L 550,910 L 520,940 L 480,955 L 440,950 L 405,930 L 380,900 L 370,865 L 375,840 Z" data-state="Tamil Nadu" />
+          <text x="475" y="880" class="state-label">TN</text>
+          
+          <!-- Kerala -->
+          <path id="kerala" class="state" d="M 280,730 L 320,800 L 350,820 L 375,840 L 370,880 L 360,920 L 345,960 L 325,985 L 305,995 L 285,980 L 270,950 L 260,910 L 255,870 L 260,830 L 270,790 Z" data-state="Kerala" />
+          <text x="310" y="890" class="state-label">KER</text>
+          
+          <!-- Puducherry (small circle) -->
+          <circle id="puducherry" class="state" cx="520" cy="900" r="8" data-state="Puducherry" />
+          <text x="520" y="903" class="state-label" style="font-size:7px">PY</text>
+          
+          <!-- Andaman & Nicobar Islands -->
+          <g id="andaman" class="state" data-state="Andaman & Nicobar">
+            <ellipse cx="850" cy="700" rx="15" ry="60" />
+            <text x="850" y="710" class="state-label" style="font-size:9px">A&N</text>
+          </g>
+          
+          <!-- Lakshadweep -->
+          <g id="lakshadweep" class="state" data-state="Lakshadweep">
+            <circle cx="150" cy="850" r="25" />
+            <text x="150" y="855" class="state-label" style="font-size:9px">LD</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- State Info Panel -->
+      <div class="state-info-panel" id="stateInfoPanel">
+        <h2 id="stateName">Select a State</h2>
+        <p id="stateDescription">Click on any state on the map to explore its traditional crafts!</p>
+        
+        <div id="craftsGrid" class="state-crafts-grid" style="display: none;">
+          <!-- Crafts will be loaded here dynamically -->
+        </div>
+
+        <button id="viewAllBtn" class="view-all-btn" style="display: none;">
+          <i class="fas fa-eye"></i> View All Artworks from this State
+        </button>
+      </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="map-statistics">
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-map-marked-alt"></i></div>
+        <div class="stat-info">
+          <h3>28+ States</h3>
+          <p>Covering India</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-palette"></i></div>
+        <div class="stat-info">
+          <h3>100+ Crafts</h3>
+          <p>Traditional Arts</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+          <h3>500+ Artisans</h3>
+          <p>Skilled Craftspeople</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-cube"></i></div>
+        <div class="stat-info">
+          <h3>AR Ready</h3>
+          <p>3D Models Available</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .crafts-map-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .map-header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .map-header .back-btn {
+      position: absolute;
+      left: 0;
+      top: 0;
+      background: var(--card-bg);
+      padding: 10px 20px;
+      border-radius: 12px;
+      text-decoration: none;
+      color: var(--card-text);
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .map-header h1 {
+      font-size: 2.8rem;
+      color: var(--card-text);
+      margin-bottom: 10px;
+    }
+
+    .map-header p {
+      color: var(--card-text);
+      opacity: 0.8;
+      font-size: 1.2rem;
+    }
+
+    .map-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .india-map-section {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 30px;
+      box-shadow: var(--elevation-3);
+    }
+
+    #indiaMap {
+      width: 100%;
+      height: auto;
+    }
+
+    .state {
+      fill: rgba(102, 126, 234, 0.3);
+      stroke: var(--color-primary);
+      stroke-width: 2;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .state:hover {
+      fill: rgba(102, 126, 234, 0.6);
+      stroke-width: 3;
+      filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.8));
+    }
+
+    .state.selected {
+      fill: var(--color-primary);
+      stroke: var(--color-accent);
+      stroke-width: 4;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .state-label {
+      fill: white;
+      font-size: 14px;
+      font-weight: 700;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+
+    .state-info-panel {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 30px;
+      box-shadow: var(--elevation-3);
+      min-height: 500px;
+    }
+
+    .state-info-panel h2 {
+      color: var(--card-text);
+      font-size: 2.2rem;
+      margin-bottom: 15px;
+    }
+
+    .state-info-panel p {
+      color: var(--card-text);
+      opacity: 0.8;
+      font-size: 1.1rem;
+      margin-bottom: 25px;
+    }
+
+    .state-crafts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .craft-item {
+      background: var(--glass-bg);
+      border-radius: 16px;
+      padding: 15px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+
+    .craft-item:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--elevation-3);
+      border-color: var(--color-primary);
+    }
+
+    .craft-item img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 10px;
+    }
+
+    .craft-item h4 {
+      color: var(--card-text);
+      margin: 8px 0 4px 0;
+      font-size: 1rem;
+    }
+
+    .craft-item p {
+      color: var(--card-text);
+      opacity: 0.7;
+      font-size: 0.85rem;
+      margin: 0;
+    }
+
+    .view-all-btn {
+      width: 100%;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      padding: 15px;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .view-all-btn:hover {
+      background: var(--color-accent);
+      transform: translateY(-2px);
+      box-shadow: var(--elevation-3);
+    }
+
+    /* Statistics Section */
+    .map-statistics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 25px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: var(--elevation-2);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--elevation-4);
+    }
+
+    .stat-icon {
+      font-size: 3rem;
+      color: var(--color-primary);
+      width: 70px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--glass-bg);
+      border-radius: 50%;
+    }
+
+    .stat-info h3 {
+      color: var(--card-text);
+      margin: 0 0 5px 0;
+      font-size: 1.8rem;
+    }
+
+    .stat-info p {
+      color: var(--card-text);
+      opacity: 0.7;
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    @media (max-width: 1024px) {
+      .map-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .state-crafts-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .map-header h1 {
+        font-size: 2rem;
+      }
+
+      .state-crafts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <script>
+    // State Crafts Data - Using actual products from database
+    const stateCrafts = {
+      "Rajasthan": {
+        description: "Famous for blue pottery, block printing, miniature paintings, and terracotta crafts",
+        crafts: [
+          { name: "Blue Pottery Vase", artId: 5, image: "/static/images/blue_vase.jpeg" },
+          { name: "Terracotta Pot", artId: 1, image: "/static/images/pottery.jpg" }
+        ]
+      },
+      "Assam": {
+        description: "Known for exquisite bamboo and cane crafts, and silk weaving traditions",
+        crafts: [
+          { name: "Bamboo Basket", artId: 2, image: "/static/images/basket.jpg" }
+        ]
+      },
+      "Tamil Nadu": {
+        description: "Renowned for Tanjore paintings, bronze sculptures, temple art, and silk sarees",
+        crafts: [
+          { name: "Bronze Ganesha", artId: 3, image: "/static/images/ganesha.png" }
+        ]
+      },
+      "Kerala": {
+        description: "Famous for bell metal crafts, Kathakali masks, coir products, and wood carvings",
+        crafts: [
+          { name: "Temple Bell", artId: 4, image: "/static/images/bell.png" }
+        ]
+      },
+      "Goa": {
+        description: "Known for traditional cane and bamboo furniture making, and Portuguese-influenced handicrafts",
+        crafts: [
+          { name: "Cane Chair", artId: 6, image: "/static/images/chair.png" }
+        ]
+      },
+      "Gujarat": {
+        description: "Known for Bandhani textiles, embroidery, mirror work, and traditional handicrafts",
+        crafts: []
+      },
+      "Maharashtra": {
+        description: "Home to Warli art, Paithani sarees, Kolhapuri chappals, and traditional pottery",
+        crafts: []
+      },
+      "Karnataka": {
+        description: "Famous for Channapatna toys, Mysore silk, sandalwood crafts, and Bidriware",
+        crafts: []
+      },
+      "Bihar": {
+        description: "Home to the famous Madhubani paintings and Sikki grass crafts",
+        crafts: []
+      },
+      "Jammu & Kashmir": {
+        description: "Famous for Papier-mâché, hand-knotted carpets, and pashmina shawls",
+        crafts: []
+      },
+      "West Bengal": {
+        description: "Known for Terracotta crafts, Kantha embroidery, Dokra art, and traditional textiles",
+        crafts: []
+      },
+      "Uttar Pradesh": {
+        description: "Famous for Chikan embroidery, brassware, carpet weaving, and zari work",
+        crafts: []
+      },
+      "Punjab": {
+        description: "Known for Phulkari embroidery, Punjabi juttis, and traditional crafts",
+        crafts: []
+      },
+      "Haryana": {
+        description: "Famous for handloom textiles, pottery, and traditional crafts",
+        crafts: []
+      },
+      "Delhi": {
+        description: "Hub for diverse crafts from across India, including zardozi work and traditional textiles",
+        crafts: []
+      },
+      "Himachal Pradesh": {
+        description: "Known for Kullu shawls, Chamba rumals, and traditional wood crafts",
+        crafts: []
+      },
+      "Uttarakhand": {
+        description: "Famous for wood carving, Aipan art, and traditional woolen crafts",
+        crafts: []
+      },
+      "Madhya Pradesh": {
+        description: "Home to Chanderi and Maheshwari textiles, Gond art, and tribal crafts",
+        crafts: []
+      },
+      "Chhattisgarh": {
+        description: "Known for bell metal crafts, tribal art, and bamboo crafts",
+        crafts: []
+      },
+      "Jharkhand": {
+        description: "Famous for tribal paintings, bamboo crafts, and Dokra art",
+        crafts: []
+      },
+      "Odisha": {
+        description: "Renowned for Pattachitra paintings, silver filigree, appliqué work, and stone carving",
+        crafts: []
+      },
+      "Telangana": {
+        description: "Known for Bidriware, Pochampally ikat, and traditional textiles",
+        crafts: []
+      },
+      "Andhra Pradesh": {
+        description: "Famous for Kalamkari art, Kondapalli toys, and traditional textiles",
+        crafts: []
+      },
+      "Sikkim": {
+        description: "Known for traditional carpet weaving, thangka paintings, and wood carving",
+        crafts: []
+      },
+      "Arunachal Pradesh": {
+        description: "Famous for traditional bamboo and cane crafts, tribal textiles, and wood carving",
+        crafts: []
+      },
+      "Nagaland": {
+        description: "Known for traditional shawls, bamboo crafts, and tribal art",
+        crafts: []
+      },
+      "Manipur": {
+        description: "Famous for unique textiles, pottery, and bamboo crafts",
+        crafts: []
+      },
+      "Mizoram": {
+        description: "Known for traditional Puan (handwoven cloth), bamboo crafts, and cane furniture",
+        crafts: []
+      },
+      "Tripura": {
+        description: "Famous for bamboo and cane crafts, traditional textiles, and wood carving",
+        crafts: []
+      },
+      "Meghalaya": {
+        description: "Known for bamboo and cane crafts, traditional weaving, and wood carving",
+        crafts: []
+      },
+      "Puducherry": {
+        description: "Known for French-influenced handicrafts, paper mache, and traditional textiles",
+        crafts: []
+      },
+      "Andaman & Nicobar": {
+        description: "Famous for shell crafts, wood carving, and traditional tribal art",
+        crafts: []
+      },
+      "Lakshadweep": {
+        description: "Known for traditional coconut crafts, shell work, and coir products",
+        crafts: []
+      }
+    };
+
+    // Initialize map interactions
+    const states = document.querySelectorAll('.state');
+    const stateName = document.getElementById('stateName');
+    const stateDescription = document.getElementById('stateDescription');
+    const craftsGrid = document.getElementById('craftsGrid');
+    const viewAllBtn = document.getElementById('viewAllBtn');
+
+    states.forEach(state => {
+      state.addEventListener('click', function() {
+        const selectedState = this.getAttribute('data-state');
+        selectState(selectedState);
+      });
+    });
+
+    function selectState(state) {
+      // Remove previous selection
+      states.forEach(s => s.classList.remove('selected'));
+      
+      // Select new state
+      document.getElementById(state.toLowerCase().replace(/\s+/g, '').replace('&', ''))?.classList.add('selected');
+
+      const stateData = stateCrafts[state];
+      
+      if (stateData) {
+        stateName.textContent = state;
+        stateDescription.textContent = stateData.description;
+        
+        if (stateData.crafts.length > 0) {
+          craftsGrid.style.display = 'grid';
+          viewAllBtn.style.display = 'flex';
+          
+          craftsGrid.innerHTML = stateData.crafts.map(craft => `
+            <div class="craft-item" onclick="window.location.href='/art/${craft.artId}'">
+              <img src="${craft.image}" alt="${craft.name}">
+              <h4>${craft.name}</h4>
+              <p>View Details</p>
+            </div>
+          `).join('');
+          
+          viewAllBtn.onclick = () => {
+            window.location.href = `/home?state=${encodeURIComponent(state)}`;
+          };
+        } else {
+          craftsGrid.style.display = 'none';
+          viewAllBtn.style.display = 'none';
+          stateDescription.textContent += ' More artworks coming soon!';
+        }
+        
+        showToast(`Exploring ${state}!`, 'info');
+      }
+    }
+
+    // Auto-select Rajasthan on load
+    setTimeout(() => {
+      selectState('Rajasthan');
+    }, 500);
+  </script>
+{% endblock content %}

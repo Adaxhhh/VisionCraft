@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Discover, share, and view art in augmented reality.">
+  <title>{% block title %}Art Discovery Platform{% endblock title %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='toast.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="{{ url_for('static', filename='toast.js') }}"></script>
+</head>
+<body>
+  <header class="top-header">
+    <div class="brand">
+      <div class="logo-icon"><i class="fas fa-palette"></i></div>
+      <div>
+        <h1 class="brand-title" data-lang-key="app_title">Art Discovery</h1>
+        <p class="brand-subtitle" data-lang-key="app_subtitle">Explore your next inspiration</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+        <i class="fas fa-moon" id="themeIcon"></i>
+      </button>
+      <button id="langToggle" class="lang-toggle" aria-label="Change language">
+        <span id="langText">EN</span>
+      </button>
+      {% if current_user.is_authenticated %}
+      <div class="user-menu-container">
+        <button class="user-menu-btn" id="userMenuBtn">
+          <i class="fas fa-user-circle"></i>
+          <span class="user-name">{{ current_user.name or current_user.email.split('@')[0] }}</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dropdown-header">
+            <i class="fas fa-user-circle"></i>
+            <div>
+              <div class="dropdown-username">{{ current_user.username }}</div>
+              <div class="dropdown-role">{{ current_user.role|title }}</div>
+            </div>
+          </div>
+          <div class="dropdown-divider"></div>
+          <a href="{{ url_for('profile') }}" class="dropdown-item">
+            <i class="fas fa-user"></i>
+            <span data-lang-key="profile">Profile</span>
+          </a>
+          {% if current_user.role == 'seller' %}
+          <a href="{{ url_for('seller_analytics') }}" class="dropdown-item">
+            <i class="fas fa-chart-line"></i>
+            <span>Analytics Dashboard</span>
+          </a>
+          <a href="{{ url_for('upload') }}" class="dropdown-item">
+            <i class="fas fa-upload"></i>
+            <span data-lang-key="upload">Upload Artwork</span>
+          </a>
+          {% else %}
+          <a href="{{ url_for('cart') }}" class="dropdown-item">
+            <i class="fas fa-shopping-cart"></i>
+            <span>My Cart</span>
+            {% if cart_count > 0 %}
+            <span class="badge">{{ cart_count }}</span>
+            {% endif %}
+          </a>
+          <a href="{{ url_for('my_orders') }}" class="dropdown-item">
+            <i class="fas fa-box"></i>
+            <span>My Orders</span>
+          </a>
+          {% endif %}
+          <div class="dropdown-divider"></div>
+          <a href="{{ url_for('logout') }}" class="dropdown-item logout-item">
+            <i class="fas fa-sign-out-alt"></i>
+            <span data-lang-key="logout">Logout</span>
+          </a>
+        </div>
+      </div>
+      {% else %}
+      <a href="{{ url_for('login') }}" class="btn scan-btn" aria-label="Login">
+        <i class="fas fa-sign-in-alt"></i> <span data-lang-key="login">Login</span>
+      </a>
+      {% endif %}
+    </div>
+  </header>
+
+  <main>
+    {% block content %}{% endblock content %}
+  </main>
+
+  <nav class="bottom-nav">
+    {% if current_user.is_authenticated and current_user.role == 'seller' %}
+      <!-- SELLER NAVIGATION -->
+      <a href="{{ url_for('seller_analytics') }}" class="nav-item {% if 'seller_analytics' in request.endpoint %}active{% endif %}">
+        <i class="fas fa-chart-line"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('home') }}" class="nav-item {% if request.endpoint == 'home' %}active{% endif %}">
+        <i class="fas fa-store"></i>
+        <span>Browse</span>
+      </a>
+      <a href="{{ url_for('upload') }}" class="nav-item {% if request.endpoint == 'upload' %}active{% endif %}">
+        <i class="fas fa-upload"></i>
+        <span data-lang-key="upload">Upload</span>
+      </a>
+      <a href="{{ url_for('events') }}" class="nav-item {% if request.endpoint == 'events' %}active{% endif %}">
+        <i class="fas fa-calendar"></i>
+        <span data-lang-key="events">Events</span>
+      </a>
+      <a href="{{ url_for('profile') }}" class="nav-item {% if request.endpoint == 'profile' %}active{% endif %}">
+        <i class="fas fa-user-circle"></i>
+        <span data-lang-key="profile">Profile</span>
+      </a>
+    {% elif current_user.is_authenticated and current_user.role == 'customer' %}
+      <!-- CUSTOMER NAVIGATION -->
+      <a href="{{ url_for('home') }}" class="nav-item {% if request.endpoint == 'home' %}active{% endif %}">
+        <i class="fas fa-home"></i>
+        <span data-lang-key="home">Home</span>
+      </a>
+      <a href="{{ url_for('search') }}" class="nav-item {% if request.endpoint == 'search' %}active{% endif %}">
+        <i class="fas fa-search"></i>
+        <span data-lang-key="search">Search</span>
+      </a>
+      <a href="{{ url_for('cart') }}" class="nav-item {% if request.endpoint == 'cart' %}active{% endif %}" style="position: relative;">
+        <i class="fas fa-shopping-cart"></i>
+        <span data-lang-key="cart">Cart</span>
+        {% if cart_count > 0 %}
+        <span class="cart-badge">{{ cart_count }}</span>
+        {% endif %}
+      </a>
+      <a href="{{ url_for('likes') }}" class="nav-item {% if request.endpoint == 'likes' %}active{% endif %}">
+        <i class="fas fa-heart"></i>
+        <span data-lang-key="likes">Likes</span>
+      </a>
+      <a href="{{ url_for('profile') }}" class="nav-item {% if request.endpoint == 'profile' %}active{% endif %}">
+        <i class="fas fa-user-circle"></i>
+        <span data-lang-key="profile">Profile</span>
+      </a>
+    {% else %}
+      <!-- GUEST NAVIGATION -->
+      <a href="{{ url_for('home') }}" class="nav-item {% if request.endpoint == 'home' %}active{% endif %}">
+        <i class="fas fa-home"></i>
+        <span data-lang-key="home">Home</span>
+      </a>
+      <a href="{{ url_for('search') }}" class="nav-item {% if request.endpoint == 'search' %}active{% endif %}">
+        <i class="fas fa-search"></i>
+        <span data-lang-key="search">Search</span>
+      </a>
+      <a href="{{ url_for('events') }}" class="nav-item {% if request.endpoint == 'events' %}active{% endif %}">
+        <i class="fas fa-calendar"></i>
+        <span data-lang-key="events">Events</span>
+      </a>
+      <a href="{{ url_for('login') }}" class="nav-item {% if request.endpoint == 'login' %}active{% endif %}">
+        <i class="fas fa-sign-in-alt"></i>
+        <span data-lang-key="login">Login</span>
+      </a>
+    {% endif %}
+  </nav>
+
+
+  <footer>
+    <p>&copy; 2025 <span data-lang-key="footer_text">Art Discovery Platform. Explore, Connect, Create.</span></p>
+  </footer>
+
+  <script>
+    // ========================================
+    // THEME TOGGLE (Dark/Light Mode)
+    // ========================================
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const htmlElement = document.documentElement;
+
+    // Load saved theme from localStorage
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    htmlElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+
+    function updateThemeIcon(theme) {
+      if (theme === 'dark') {
+        themeIcon.className = 'fas fa-sun';
+      } else {
+        themeIcon.className = 'fas fa-moon';
+      }
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = htmlElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      
+      htmlElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon(newTheme);
+      
+      // Add animation
+      themeToggle.style.transform = 'rotate(360deg)';
+      setTimeout(() => {
+        themeToggle.style.transform = 'rotate(0deg)';
+      }, 300);
+    });
+
+    // ========================================
+    // LANGUAGE TOGGLE (English/Hindi)
+    // ========================================
+    const langToggle = document.getElementById('langToggle');
+    const langText = document.getElementById('langText');
+
+    const translations = {
+      en: {
+        // Navigation
+        app_title: 'Art Discovery',
+        app_subtitle: 'Explore your next inspiration',
+        search: 'Search',
+        home: 'Home',
+        upload: 'Upload',
+        likes: 'Likes',
+        profile: 'Profile',
+        events: 'Events',
+        seller: 'Seller',
+        cart: 'Cart',
+        orders: 'Orders',
+        
+        // Common
+        footer_text: 'Art Discovery Platform. Explore, Connect, Create.',
+        featured_artworks: 'Featured Artworks',
+        featured_subtitle: 'Discover the latest and greatest creations from our global community.',
+        view_in_ar: 'View in AR',
+        by: 'by',
+        price: 'Price',
+        category: 'Category',
+        sort: 'Sort',
+        filter: 'Filter',
+        
+        // Actions
+        add_to_cart: 'Add to Cart',
+        buy_now: 'Buy Now',
+        checkout: 'Checkout',
+        place_order: 'Place Order',
+        login: 'Login',
+        register: 'Register',
+        logout: 'Logout',
+        save: 'Save',
+        cancel: 'Cancel',
+        delete: 'Delete',
+        edit: 'Edit',
+        share: 'Share',
+        
+        // Product
+        description: 'Description',
+        artist: 'Artist',
+        rating: 'Rating',
+        reviews: 'Reviews',
+        stock: 'In Stock',
+        out_of_stock: 'Out of Stock'
+      },
+      hi: {
+        // Navigation  
+        app_title: 'कला खोज',
+        app_subtitle: 'अपनी अगली प्रेरणा खोजें',
+        search: 'खोजें',
+        home: 'होम',
+        upload: 'अपलोड',
+        likes: 'पसंद',
+        profile: 'प्रोफाइल',
+        events: 'कार्यक्रम',
+        seller: 'विक्रेता',
+        cart: 'कार्ट',
+        orders: 'ऑर्डर',
+        
+        // Common
+        footer_text: 'कला खोज मंच। खोजें, जुड़ें, बनाएं।',
+        featured_artworks: 'विशेष कलाकृतियां',
+        featured_subtitle: 'हमारे समुदाय की नवीनतम और बेहतरीन रचनाएं खोजें।',
+        view_in_ar: 'AR में देखें',
+        by: 'द्वारा',
+        price: 'कीमत',
+        category: 'श्रेणी',
+        sort: 'क्रमबद्ध करें',
+        filter: 'फ़िल्टर',
+        
+        // Actions
+        add_to_cart: 'कार्ट में जोड़ें',
+        buy_now: 'अभी खरीदें',
+        checkout: 'चेकआउट',
+        place_order: 'ऑर्डर करें',
+        login: 'लॉगिन',
+        register: 'रजिस्टर',
+        logout: 'लॉगआउट',
+        save: 'सहेजें',
+        cancel: 'रद्द करें',
+        delete: 'हटाएं',
+        edit: 'संपादित करें',
+        share: 'शेयर करें',
+        
+        // Product
+        description: 'विवरण',
+        artist: 'कलाकार',
+        rating: 'रेटिंग',
+        reviews: 'समीक्षा',
+        stock: 'स्टॉक में',
+        out_of_stock: 'स्टॉक में नहीं'
+      }
+    };
+
+    // Load saved language from localStorage
+    let currentLang = localStorage.getItem('language') || 'en';
+    langText.textContent = currentLang.toUpperCase();
+    applyTranslations(currentLang);
+
+    function applyTranslations(lang) {
+      const elements = document.querySelectorAll('[data-lang-key]');
+      elements.forEach(element => {
+        const key = element.getAttribute('data-lang-key');
+        if (translations[lang][key]) {
+          // Handle different element types
+          if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+            element.placeholder = translations[lang][key];
+          } else {
+            element.textContent = translations[lang][key];
+          }
+        }
+      });
+    }
+
+    langToggle.addEventListener('click', () => {
+      currentLang = currentLang === 'en' ? 'hi' : 'en';
+      langText.textContent = currentLang.toUpperCase();
+      localStorage.setItem('language', currentLang);
+      applyTranslations(currentLang);
+      
+      // Add animation
+      langToggle.style.transform = 'scale(1.1)';
+      setTimeout(() => {
+      langToggle.style.transform = 'scale(1)';
+      }, 200);
+    });
+
+    // ========================================
+    // USER MENU DROPDOWN
+    // ========================================
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    const userDropdown = document.getElementById('userDropdown');
+
+    if (userMenuBtn && userDropdown) {
+      userMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userDropdown.classList.toggle('show');
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+          userDropdown.classList.remove('show');
+        }
+      });
+    }
+  </script>
+
+  <style>
+    /* User Menu Styles */
+    .user-menu-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .user-menu-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .user-menu-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .user-menu-btn i:first-child {
+      font-size: 1.3rem;
+    }
+
+    .user-menu-btn i:last-child {
+      font-size: 0.8rem;
+      transition: transform 0.3s;
+    }
+
+    .user-menu-btn:hover i:last-child {
+      transform: translateY(2px);
+    }
+
+    .user-name {
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .user-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      min-width: 220px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+
+    .user-dropdown.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+      border-radius: 12px 12px 0 0;
+      color: white;
+    }
+
+    .dropdown-header i {
+      font-size: 2rem;
+    }
+
+    .dropdown-username {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .dropdown-role {
+      font-size: 0.85rem;
+      opacity: 0.9;
+      text-transform: capitalize;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: #e0e0e0;
+      margin: 8px 0;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: var(--color-text);
+      text-decoration: none;
+      transition: all 0.2s;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .dropdown-item:first-of-type {
+      margin-top: 8px;
+    }
+
+    .dropdown-item:last-of-type {
+      margin-bottom: 8px;
+    }
+
+    .dropdown-item i {
+      font-size: 1.1rem;
+      width: 20px;
+      text-align: center;
+      color: var(--color-primary);
+    }
+
+    .dropdown-item:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .logout-item {
+      color: #e74c3c;
+    }
+
+    .logout-item i {
+      color: #e74c3c;
+    }
+
+    .logout-item:hover {
+      background: rgba(231, 76, 60, 0.1);
+    }
+
+    /* Mobile responsive for user menu */
+    @media (max-width: 768px) {
+      .user-name {
+        display: none;
+      }
+
+      .user-menu-btn {
+        padding: 8px 12px;
+      }
+
+      .user-dropdown {
+        right: -10px;
+      }
+    }
+  </style>
+
+</body>
+</html>

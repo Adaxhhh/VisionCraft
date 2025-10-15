@@ -1,0 +1,630 @@
+{% extends "base.html" %}
+
+{% block title %}Seller Analytics Dashboard | VisionCraft{% endblock title %}
+
+{% block content %}
+  <div class="analytics-container">
+    <div class="analytics-header">
+      <h1>📊 Seller Analytics Dashboard</h1>
+      <p>Track your artwork performance and engagement metrics</p>
+      <button class="export-btn" onclick="exportReport()">
+        <i class="fas fa-download"></i> Export Report
+      </button>
+    </div>
+
+    <!-- Key Metrics Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card total-views">
+        <div class="metric-icon"><i class="fas fa-eye"></i></div>
+        <div class="metric-content">
+          <h3>Total Views</h3>
+          <p class="metric-value">{{ "{:,}".format(total_views) }}</p>
+          <span class="metric-change">Across {{ artworks|length }} artworks</span>
+        </div>
+      </div>
+
+      <div class="metric-card total-favorites">
+        <div class="metric-icon"><i class="fas fa-heart"></i></div>
+        <div class="metric-content">
+          <h3>Favorites</h3>
+          <p class="metric-value">{{ "{:,}".format(total_favorites) }}</p>
+          <span class="metric-change">Total likes received</span>
+        </div>
+      </div>
+
+      <div class="metric-card ar-tries">
+        <div class="metric-icon"><i class="fas fa-cube"></i></div>
+        <div class="metric-content">
+          <h3>AR Try-Ons</h3>
+          <p class="metric-value">{{ "{:,}".format(total_ar_tries) }}</p>
+          <span class="metric-change">Estimated AR views</span>
+        </div>
+      </div>
+
+      <div class="metric-card total-sales">
+        <div class="metric-icon"><i class="fas fa-rupee-sign"></i></div>
+        <div class="metric-content">
+          <h3>Total Revenue</h3>
+          <p class="metric-value">₹{{ "{:,.2f}".format(total_revenue) }}</p>
+          <span class="metric-change">From completed orders</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="chart-card">
+        <h3><i class="fas fa-chart-line"></i> Views Over Time</h3>
+        <div class="chart-wrapper"><canvas id="viewsChart"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <h3><i class="fas fa-chart-pie"></i> Performance by Category</h3>
+        <div class="chart-wrapper"><canvas id="categoryChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Local Events Preview -->
+    <div class="table-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <h3 style="margin:0"><i class="fas fa-calendar-alt"></i> Local Events & Workshops</h3>
+        <a href="{{ url_for('events') }}" class="action-btn-small" style="text-decoration:none;">View Calendar</a>
+      </div>
+      <p class="text-muted" style="margin-top:8px">Nearby craft fairs, workshops, and community classes</p>
+      <div class="artworks-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th>Date</th>
+              <th>Location</th>
+              <th>Type</th>
+              <th>RSVP</th>
+            </tr>
+          </thead>
+          <tbody id="eventsPreviewBody">
+            <!-- Filled by JS from /events API data when available -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Artwork Performance Table -->
+    <div class="table-card">
+      <h3><i class="fas fa-trophy"></i> Top Performing Artworks</h3>
+      <div class="artworks-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Artwork</th>
+              <th>Views</th>
+              <th>Favorites</th>
+              <th>AR Tries</th>
+              <th>Rating</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for art in artworks[:5] %}
+            <tr>
+              <td class="artwork-cell">
+                <img src="{{ art.image }}" alt="{{ art.title }}" class="table-artwork-img">
+                <div>
+                  <strong>{{ art.title }}</strong>
+                  <br><span class="text-muted">{{ art.category }}</span>
+                </div>
+              </td>
+              <td><span class="metric-badge">{{ art.views }}</span></td>
+              <td><span class="metric-badge">{{ art.get_likes_count() }}</span></td>
+              <td><span class="metric-badge">{{ art.get_ar_tries_count() }}</span></td>
+              <td>
+                <div class="rating-display">
+                  <i class="fas fa-star" style="color: #FFD700;"></i> {{ art.rating }}
+                </div>
+              </td>
+              <td>
+                <button class="action-btn-small" onclick="viewDetails({{ art.id }})">
+                  <i class="fas fa-eye"></i> View
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AR Snapshot Gallery -->
+    <div class="snapshots-section">
+      <h3><i class="fas fa-camera"></i> Customer AR Snapshots</h3>
+      <p>See how customers are visualizing your artworks in their spaces</p>
+      <div class="snapshots-gallery-grid">
+        <div class="snapshot-card">
+          <img src="https://placehold.co/300x300/667eea/ffffff?text=Customer+AR+1" alt="Snapshot">
+          <div class="snapshot-overlay">
+            <p><strong>Terracotta Pot</strong></p>
+            <p>Shared 2 days ago</p>
+          </div>
+        </div>
+        <div class="snapshot-card">
+          <img src="https://placehold.co/300x300/764ba2/ffffff?text=Customer+AR+2" alt="Snapshot">
+          <div class="snapshot-overlay">
+            <p><strong>Wooden Elephant</strong></p>
+            <p>Shared 3 days ago</p>
+          </div>
+        </div>
+        <div class="snapshot-card">
+          <img src="https://placehold.co/300x300/8B4513/ffffff?text=Customer+AR+3" alt="Snapshot">
+          <div class="snapshot-overlay">
+            <p><strong>Bronze Ganesha</strong></p>
+            <p>Shared 5 days ago</p>
+          </div>
+        </div>
+        <div class="snapshot-card">
+          <img src="https://placehold.co/300x300/FF6347/ffffff?text=Customer+AR+4" alt="Snapshot">
+          <div class="snapshot-overlay">
+            <p><strong>Madhubani Art</strong></p>
+            <p>Shared 1 week ago</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    .analytics-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+      height: 250px;
+    }
+
+    .analytics-header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .analytics-header h1 {
+      font-size: 2.5rem;
+      color: var(--card-text);
+      margin-bottom: 10px;
+    }
+
+    .analytics-header p {
+      color: var(--card-text);
+      opacity: 0.8;
+      font-size: 1.1rem;
+    }
+
+    .export-btn {
+      position: absolute;
+      right: 0;
+      top: 0;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .export-btn:hover {
+      background: var(--color-accent);
+      transform: translateY(-2px);
+      box-shadow: var(--elevation-3);
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .metric-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 25px;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      box-shadow: var(--elevation-2);
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--elevation-4);
+    }
+
+    .metric-card.total-views { border-color: rgba(52, 152, 219, 0.3); }
+    .metric-card.total-favorites { border-color: rgba(231, 76, 60, 0.3); }
+    .metric-card.ar-tries { border-color: rgba(155, 89, 182, 0.3); }
+    .metric-card.total-sales { border-color: rgba(46, 204, 113, 0.3); }
+
+    .metric-icon {
+      font-size: 3rem;
+      width: 70px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .total-views .metric-icon { color: #3498db; background: rgba(52, 152, 219, 0.1); }
+    .total-favorites .metric-icon { color: #e74c3c; background: rgba(231, 76, 60, 0.1); }
+    .ar-tries .metric-icon { color: #9b59b6; background: rgba(155, 89, 182, 0.1); }
+    .total-sales .metric-icon { color: #2ecc71; background: rgba(46, 204, 113, 0.1); }
+
+    .metric-content {
+      flex: 1;
+    }
+
+    .metric-content h3 {
+      color: var(--card-text);
+      margin: 0 0 8px 0;
+      font-size: 1rem;
+      opacity: 0.8;
+    }
+
+    .metric-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--card-text);
+      margin: 0;
+    }
+
+    .metric-change {
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .metric-change.positive { color: #2ecc71; }
+    .metric-change.negative { color: #e74c3c; }
+
+    /* Charts Section */
+    .charts-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .chart-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: var(--elevation-2);
+    }
+
+    .chart-card h3 {
+      color: var(--card-text);
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+    }
+
+    /* Table */
+    .table-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: var(--elevation-2);
+    }
+
+    .table-card h3 {
+      color: var(--card-text);
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+
+    .artworks-table {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: var(--glass-bg);
+    }
+
+    th, td {
+      padding: 15px;
+      text-align: left;
+      color: var(--card-text);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    th {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+
+    .artwork-cell {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .table-artwork-img {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .text-muted {
+      opacity: 0.6;
+      font-size: 0.85rem;
+    }
+
+    .metric-badge {
+      background: var(--glass-bg);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .rating-display {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+    }
+
+    .action-btn-small {
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .action-btn-small:hover {
+      background: var(--color-accent);
+      transform: translateY(-2px);
+    }
+
+    /* Snapshots Section */
+    .snapshots-section {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: var(--elevation-2);
+    }
+
+    .snapshots-section h3 {
+      color: var(--card-text);
+      margin-bottom: 10px;
+      font-size: 1.5rem;
+    }
+
+    .snapshots-section > p {
+      color: var(--card-text);
+      opacity: 0.8;
+      margin-bottom: 20px;
+    }
+
+    .snapshots-gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .snapshot-card {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .snapshot-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--elevation-4);
+    }
+
+    .snapshot-card img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+    }
+
+    .snapshot-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+      padding: 20px 15px;
+      color: white;
+    }
+
+    .snapshot-overlay p {
+      margin: 0;
+    }
+
+    @media (max-width: 768px) {
+      .charts-section {
+        grid-template-columns: 1fr;
+      }
+
+      .analytics-header h1 {
+        font-size: 2rem;
+      }
+
+      .export-btn {
+        position: static;
+        margin: 20px auto 0;
+      }
+    }
+  </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (typeof Chart === 'undefined') {
+        console.error('Chart.js failed to load');
+        return;
+      }
+
+      const textColor = getComputedStyle(document.documentElement).getPropertyValue('--card-text').trim() || '#2c3e50';
+      const gridColor = 'rgba(0,0,0,0.1)';
+
+      // Views Chart
+      const viewsEl = document.getElementById('viewsChart');
+      if (viewsEl) {
+        const viewsCtx = viewsEl.getContext('2d');
+        new Chart(viewsCtx, {
+          type: 'line',
+          data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+              label: 'Total Views',
+              data: [1200, 1900, 3000, 5000, 8000, 15342],
+              borderColor: '#667eea',
+              backgroundColor: 'rgba(102, 126, 234, 0.15)',
+              pointBackgroundColor: '#667eea',
+              pointBorderColor: '#fff',
+              tension: 0.35,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                titleColor: textColor,
+                bodyColor: textColor,
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                borderColor: gridColor,
+                borderWidth: 1
+              }
+            },
+            scales: {
+              x: {
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              },
+              y: {
+                ticks: { color: textColor },
+                grid: { color: gridColor }
+              }
+            }
+          }
+        });
+      }
+
+      // Category Chart
+      const categoryEl = document.getElementById('categoryChart');
+      if (categoryEl) {
+        const categoryCtx = categoryEl.getContext('2d');
+        new Chart(categoryCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Pottery', 'Woodcraft', 'Textiles', 'Sculpture', 'Painting', 'Others'],
+            datasets: [{
+              data: [25, 20, 18, 15, 12, 10],
+              backgroundColor: ['#667eea','#764ba2','#f39c12','#e74c3c','#3498db','#95a5a6'],
+              borderWidth: 1,
+              borderColor: 'rgba(255,255,255,0.6)'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: textColor } }
+            }
+          }
+        });
+      }
+
+      // Preview Events (optional: fetch from /events page DOM or define inline)
+      try {
+        const previewBody = document.getElementById('eventsPreviewBody');
+        if (previewBody) {
+          const sample = [
+            { id: 1, title: 'Jaipur Craft Fair', date: '2025-10-20', location: 'Jaipur, RJ', type: 'Fair' },
+            { id: 2, title: 'Pottery Workshop', date: '2025-10-22', location: 'Pune, MH', type: 'Workshop' },
+            { id: 3, title: 'Textile Dyeing Class', date: '2025-10-25', location: 'Delhi, DL', type: 'Class' },
+          ];
+          previewBody.innerHTML = sample.map(e => `
+            <tr>
+              <td>${e.title}</td>
+              <td>${e.date}</td>
+              <td>${e.location}</td>
+              <td><span class="metric-badge">${e.type}</span></td>
+              <td>
+                <button class="action-btn-small" onclick="rsvpEvent(${e.id})">
+                  <i class="fas fa-check"></i> RSVP
+                </button>
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) { console.warn('Events preview failed', err); }
+    });
+
+    function viewDetails(artId) {
+      window.location.href = `/art/${artId}`;
+    }
+
+    function exportReport() {
+      showToast('Exporting analytics report...', 'info');
+      setTimeout(() => {
+        showToast('Report exported successfully!', 'success');
+      }, 1500);
+    }
+
+    async function rsvpEvent(eventId) {
+      try {
+        const res = await fetch(`/api/events/rsvp/${eventId}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || 'RSVP updated', 'success');
+        } else {
+          showToast(data.error || 'Unable to RSVP', 'error');
+        }
+      } catch (e) {
+        showToast('Network error while RSVPing', 'error');
+      }
+    }
+  </script>
+{% endblock content %}

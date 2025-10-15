@@ -74,10 +74,6 @@ class Artwork(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     artist_name = db.Column(db.String(100), default='')
     state = db.Column(db.String(100), default='')
-    
-    # Artisan story
-    artisan_video = db.Column(db.String(300), default='')
-    video_thumbnail = db.Column(db.String(300), default='')
     making_process = db.Column(db.Text, default='')
     
     # Stats

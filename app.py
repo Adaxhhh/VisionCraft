@@ -9,18 +9,29 @@ from models import db, User, Artwork, CartItem, Order, OrderItem, Like, Event, E
 import os
 from datetime import datetime, timedelta
 import secrets
+from functools import wraps
+import logging
+from logging.handlers import RotatingFileHandler
 
 # Initialize Flask app
 app = Flask(__name__)
 
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///visioncraft.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///visioncraft.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
+# Session security
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+if not app.debug:
+    app.config['SESSION_COOKIE_SECURE'] = True  # HTTPS only in production
+
 # Initialize extensions
 db.init_app(app)
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -40,10 +51,50 @@ ALLOWED_IMAGE_EXT = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
 for directory in [MODELS_DIR, IMAGES_DIR, AVATARS_DIR]:
     os.makedirs(directory, exist_ok=True)
 
+# Configure logging
+if not app.debug:
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+    file_handler = RotatingFileHandler('logs/visioncraft.log', maxBytes=10240, backupCount=10)
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+    ))
+    file_handler.setLevel(logging.INFO)
+    app.logger.addHandler(file_handler)
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('VisionCraft startup')
+
 # Flask-Login user loader
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+# Role-based access control decorators
+def customer_required(f):
+    """Decorator to restrict access to customer-only routes"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Please log in to access this page.', 'error')
+            return redirect(url_for('login'))
+        if current_user.role != 'customer':
+            flash('This page is only accessible to customers.', 'error')
+            return redirect(url_for('seller_analytics'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def seller_required(f):
+    """Decorator to restrict access to seller-only routes"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Please log in to access this page.', 'error')
+            return redirect(url_for('login'))
+        if current_user.role != 'seller':
+            flash('This page is only accessible to sellers/artisans.', 'error')
+            return redirect(url_for('home'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Context processor to inject cart count and user info
 @app.context_processor
@@ -162,6 +213,10 @@ def landing():
 @app.route('/home')
 def home():
     """Customer home page with artwork gallery"""
+    # Redirect sellers to their dashboard
+    if current_user.is_authenticated and current_user.role == 'seller':
+        return redirect(url_for('seller_analytics'))
+    
     # Get filter and sort parameters
     category = request.args.get('category', 'all')
     sort_by = request.args.get('sort', 'default')
@@ -251,6 +306,7 @@ def search():
 
 @app.route('/cart')
 @login_required
+@customer_required
 def cart():
     """Shopping cart page"""
     cart_items = current_user.cart_items.all()
@@ -265,6 +321,7 @@ def cart():
 
 @app.route('/api/cart/add/<int:art_id>', methods=['POST'])
 @login_required
+@customer_required
 def add_to_cart(art_id):
     """Add artwork to cart"""
     artwork = Artwork.query.get_or_404(art_id)
@@ -293,6 +350,7 @@ def add_to_cart(art_id):
 
 @app.route('/api/cart/update/<int:cart_item_id>', methods=['POST'])
 @login_required
+@customer_required
 def update_cart_item(cart_item_id):
     """Update cart item quantity"""
     cart_item = CartItem.query.get_or_404(cart_item_id)
@@ -314,6 +372,7 @@ def update_cart_item(cart_item_id):
 
 @app.route('/api/cart/remove/<int:cart_item_id>', methods=['DELETE'])
 @login_required
+@customer_required
 def remove_from_cart(cart_item_id):
     """Remove item from cart"""
     cart_item = CartItem.query.get_or_404(cart_item_id)
@@ -331,6 +390,7 @@ def remove_from_cart(cart_item_id):
 
 @app.route('/checkout')
 @login_required
+@customer_required
 def checkout():
     """Checkout page"""
     cart_items = current_user.cart_items.all()
@@ -374,58 +434,86 @@ def process_checkout():
         flash('Please fill in all shipping details!', 'error')
         return redirect(url_for('checkout'))
     
-    # Calculate totals
-    subtotal = sum(item.get_subtotal() for item in cart_items)
-    shipping_fee = 149.0
-    total = subtotal + shipping_fee
-    
-    # Generate order number
-    order_number = f'VC-{datetime.utcnow().strftime("%Y%m%d")}-{secrets.token_hex(4).upper()}'
-    
-    # Create order
-    order = Order(
-        order_number=order_number,
-        user_id=current_user.id,
-        status='pending',
-        payment_method=payment_method,
-        subtotal=subtotal,
-        shipping_fee=shipping_fee,
-        total_amount=total,
-        shipping_name=shipping_name,
-        shipping_email=shipping_email,
-        shipping_phone=shipping_phone,
-        shipping_address=shipping_address,
-        shipping_city=shipping_city,
-        shipping_state=shipping_state,
-        shipping_pincode=shipping_pincode,
-        upi_id=upi_id
-    )
-    
-    db.session.add(order)
-    db.session.flush()  # Get order ID
-    
-    # Create order items
-    for cart_item in cart_items:
-        order_item = OrderItem(
-            order_id=order.id,
-            artwork_id=cart_item.artwork_id,
-            artwork_title=cart_item.artwork.title,
-            artwork_price=cart_item.artwork.price,
-            quantity=cart_item.quantity,
-            subtotal=cart_item.get_subtotal()
-        )
-        db.session.add(order_item)
+    try:
+        # Validate stock availability BEFORE creating order
+        for cart_item in cart_items:
+            if not cart_item.artwork.is_active:
+                flash(f'{cart_item.artwork.title} is no longer available!', 'error')
+                return redirect(url_for('cart'))
+            
+            if cart_item.artwork.stock_quantity < cart_item.quantity:
+                flash(f'{cart_item.artwork.title} only has {cart_item.artwork.stock_quantity} left in stock!', 'error')
+                return redirect(url_for('cart'))
         
-        # Update artwork stock
-        cart_item.artwork.stock_quantity -= cart_item.quantity
-    
-    # Clear cart
-    for cart_item in cart_items:
-        db.session.delete(cart_item)
-    
-    db.session.commit()
-    
-    flash('Order placed successfully!', 'success')
+        # Calculate totals
+        subtotal = sum(item.get_subtotal() for item in cart_items)
+        shipping_fee = 149.0
+        total = subtotal + shipping_fee
+        
+        # Generate order number
+        order_number = f'VC-{datetime.utcnow().strftime("%Y%m%d")}-{secrets.token_hex(4).upper()}'
+        
+        # Create order
+        order = Order(
+            order_number=order_number,
+            user_id=current_user.id,
+            status='pending',
+            payment_method=payment_method,
+            subtotal=subtotal,
+            shipping_fee=shipping_fee,
+            total_amount=total,
+            shipping_name=shipping_name,
+            shipping_email=shipping_email,
+            shipping_phone=shipping_phone,
+            shipping_address=shipping_address,
+            shipping_city=shipping_city,
+            shipping_state=shipping_state,
+            shipping_pincode=shipping_pincode,
+            upi_id=upi_id
+        )
+        
+        db.session.add(order)
+        db.session.flush()  # Get order ID
+        
+        # Create order items and update stock
+        for cart_item in cart_items:
+            order_item = OrderItem(
+                order_id=order.id,
+                artwork_id=cart_item.artwork_id,
+                artwork_title=cart_item.artwork.title,
+                artwork_price=cart_item.artwork.price,
+                quantity=cart_item.quantity,
+                subtotal=cart_item.get_subtotal()
+            )
+            db.session.add(order_item)
+            
+            # Update artwork stock safely
+            artwork = cart_item.artwork
+            new_stock = artwork.stock_quantity - cart_item.quantity
+            if new_stock < 0:
+                raise ValueError(f'{artwork.title} is out of stock!')
+            artwork.stock_quantity = new_stock
+        
+        # Clear cart
+        for cart_item in cart_items:
+            db.session.delete(cart_item)
+        
+        db.session.commit()
+        
+        app.logger.info(f'Order {order_number} created successfully for user {current_user.username}')
+        flash('Order placed successfully!', 'success')
+        return redirect(url_for('order_confirmation', order_id=order.id))
+        
+    except ValueError as e:
+        db.session.rollback()
+        app.logger.warning(f'Checkout failed for user {current_user.username}: {str(e)}')
+        flash(str(e), 'error')
+        return redirect(url_for('cart'))
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Checkout error for user {current_user.username}: {str(e)}')
+        flash('An error occurred while processing your order. Please try again.', 'error')
+        return redirect(url_for('cart'))
     return redirect(url_for('order_confirmation', order_id=order.id))
 
 @app.route('/order/<int:order_id>')
@@ -449,6 +537,38 @@ def my_orders():
     """User's order history"""
     orders = current_user.orders.order_by(Order.created_at.desc()).all()
     return render_template('my_orders.html', orders=orders)
+
+@app.route('/api/orders/<int:order_id>/cancel', methods=['POST'])
+@login_required
+def cancel_order(order_id):
+    """Cancel an order"""
+    order = Order.query.get_or_404(order_id)
+    
+    # Verify ownership
+    if order.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    
+    # Check if order can be cancelled
+    if order.status not in ['pending', 'processing']:
+        return jsonify({'success': False, 'error': 'Order cannot be cancelled'}), 400
+    
+    try:
+        # Update order status
+        order.status = 'cancelled'
+        
+        # Restore stock for each item
+        for item in order.items:
+            if item.artwork:
+                item.artwork.stock_quantity += item.quantity
+        
+        db.session.commit()
+        app.logger.info(f'Order {order.order_number} cancelled by user {current_user.username}')
+        
+        return jsonify({'success': True, 'message': 'Order cancelled successfully'})
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error cancelling order {order_id}: {str(e)}')
+        return jsonify({'success': False, 'error': 'Failed to cancel order'}), 500
 
 # ==================== LIKES/FAVORITES ROUTES ====================
 
@@ -545,11 +665,9 @@ def update_avatar():
 
 @app.route('/seller/analytics')
 @login_required
+@seller_required
 def seller_analytics():
     """Seller Analytics Dashboard"""
-    if current_user.role != 'seller':
-        flash('Access denied! Seller account required.', 'error')
-        return redirect(url_for('home'))
     
     # Get seller's artworks
     artworks = current_user.artworks.filter_by(is_active=True).all()
@@ -577,11 +695,9 @@ def seller_analytics():
 
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
+@seller_required
 def upload():
     """Upload new artwork"""
-    if current_user.role != 'seller':
-        flash('Upload feature is only available for sellers!', 'error')
-        return redirect(url_for('home'))
     
     if request.method == 'POST':
         # Get form data
@@ -602,6 +718,23 @@ def upload():
         try:
             price = float(price)
             stock_quantity = int(stock_quantity)
+            
+            if price < 0:
+                flash('Price cannot be negative!', 'error')
+                return render_template('upload.html')
+            
+            if price > 1000000:
+                flash('Price is too high! Maximum is ₹1,000,000', 'error')
+                return render_template('upload.html')
+            
+            if stock_quantity < 0:
+                flash('Stock quantity cannot be negative!', 'error')
+                return render_template('upload.html')
+            
+            if stock_quantity > 10000:
+                flash('Stock quantity is too high! Maximum is 10,000', 'error')
+                return render_template('upload.html')
+                
         except ValueError:
             flash('Invalid price or stock quantity!', 'error')
             return render_template('upload.html')
